@@ -15,11 +15,11 @@ namespace Minimalistic.Servers
 		TcpListener listener;
 
 		Stream inputStream;
-		StreamWriter outputStream;
+		public StreamWriter OutputStream { get; protected set; }
 
 		String httpMethod;
-		String httpUrl;
-		String httpProtocolVersionstring;
+		public string HttpUrl { get; private set; }
+		public string HttpProtocolVersionstring { get; private set; }
 		readonly Hashtable httpHeaders = new Hashtable();
 
 
@@ -115,7 +115,7 @@ namespace Minimalistic.Servers
 			inputStream = new BufferedStream(socket.GetStream());
 
 			// we probably shouldn't be using a streamwriter for all output from handlers either
-			outputStream = new StreamWriter(new BufferedStream(socket.GetStream()));
+			OutputStream = new StreamWriter(new BufferedStream(socket.GetStream()));
 			try
 			{
 				ParseRequest();
@@ -144,8 +144,8 @@ namespace Minimalistic.Servers
 				Console.WriteLine(e.Message);
 				WriteFailure();
 			}
-			outputStream.Flush();
-			inputStream = null; outputStream = null;           
+			OutputStream.Flush();
+			inputStream = null; OutputStream = null;           
 			socket.Close();
 		}
 
@@ -156,8 +156,8 @@ namespace Minimalistic.Servers
 			if (tokens.Length != 3) throw new ParseReadException();
 			
 			httpMethod = tokens[0].ToUpper();
-			httpUrl = tokens[1];
-			httpProtocolVersionstring = tokens[2];
+			HttpUrl = tokens[1];
+			HttpProtocolVersionstring = tokens[2];
 
 			Console.WriteLine("starting: " + request);
 		}
@@ -237,27 +237,27 @@ namespace Minimalistic.Servers
 
 		}
 
-		void WriteSuccess(string contentType = "text/html")
+		public void WriteSuccess(string contentType = "text/html")
 		{
 			// this is the successful HTTP response line
-			outputStream.WriteLine("HTTP/1.0 200 OK");
+			OutputStream.WriteLine("HTTP/1.0 200 OK");
 			// these are the HTTP headers...          
-			outputStream.WriteLine("Content-Type: " + contentType);
-			outputStream.WriteLine("Connection: close");
+			OutputStream.WriteLine("Content-Type: " + contentType);
+			OutputStream.WriteLine("Connection: close");
 			// ..add your own headers here if you like
 
-			outputStream.WriteLine("");	// this terminates the HTTP headers.. everything after this is HTTP body..
+			OutputStream.WriteLine("");	// this terminates the HTTP headers.. everything after this is HTTP body..
 		}
 
-		void WriteFailure()
+		public void WriteFailure()
 		{
 			// this is an http 404 failure response
-			outputStream.WriteLine("HTTP/1.0 404 File not found");
+			OutputStream.WriteLine("HTTP/1.0 404 File not found");
 			// these are the HTTP headers
-			outputStream.WriteLine("Connection: close");
+			OutputStream.WriteLine("Connection: close");
 			// ..add your own headers here
 
-			outputStream.WriteLine("");	// this terminates the HTTP headers.
+			OutputStream.WriteLine("");	// this terminates the HTTP headers.
 		}
 	}
 }
