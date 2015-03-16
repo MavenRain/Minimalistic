@@ -25,7 +25,41 @@ namespace Minimalistic.Servers
 
 		const int MaxPostSize = 10 * 1024 * 1024; // 10MB
 
-		public HttpProcessor(TcpClient s, int port)
+		sealed class ParseReadException : Exception
+		{
+			public override string Message => "Invalid http request line";
+		}
+
+		sealed class HeaderReadException : Exception
+		{
+			readonly string errorLine;
+			public HeaderReadException(string line)
+			{
+				errorLine = line;
+			}
+
+			public override string Message => "invalid http header line: " + errorLine;
+		}
+
+		sealed class ContentLengthException : Exception
+		{
+			private readonly int contentLength;
+
+			public ContentLengthException(int contentLen)
+			{
+				contentLength = contentLen;
+			}
+
+			public override string Message
+				=> String.Format("POST Content - Length({0}) too big for this simple server", contentLength);
+		}
+
+		sealed class PostClientDisconnectException : Exception
+		{
+			public override string Message => "client disconnected during post";
+		}
+
+		protected HttpProcessor(TcpClient s, int port)
 		{
 			socket = s;
 			Port = port;
@@ -95,14 +129,23 @@ namespace Minimalistic.Servers
 					HandlePostRequest();
 				}
 			}
-			catch (Exception e)
+			catch (ParseReadException e)
 			{
-				Console.WriteLine("Exception: " + e.ToString());
+				Console.WriteLine(e.Message);
+				WriteFailure();
+			}
+			catch (HeaderReadException e)
+			{
+				Console.WriteLine(e.Message);
+				WriteFailure();
+			}
+			catch (PostClientDisconnectException e)
+			{
+				Console.WriteLine(e.Message);
 				WriteFailure();
 			}
 			outputStream.Flush();
-			// bs.Flush(); // flush any remaining output
-			inputStream = null; outputStream = null; // bs = null;            
+			inputStream = null; outputStream = null;           
 			socket.Close();
 		}
 
@@ -110,10 +153,8 @@ namespace Minimalistic.Servers
 		{
 			var request = StreamReadLine(inputStream);
 			var tokens = request.Split(' ');
-			if (tokens.Length != 3)
-			{
-				throw new Exception("invalid http request line");
-			}
+			if (tokens.Length != 3) throw new ParseReadException();
+			
 			httpMethod = tokens[0].ToUpper();
 			httpUrl = tokens[1];
 			httpProtocolVersionstring = tokens[2];
@@ -134,10 +175,8 @@ namespace Minimalistic.Servers
 				}
 
 				var separator = line.IndexOf(':');
-				if (separator == -1)
-				{
-					throw new Exception("invalid http header line: " + line);
-				}
+				if (separator == -1) throw new HeaderReadException(line);
+				
 				var name = line.Substring(0, separator);
 				var pos = separator + 1;
 				while ((pos < line.Length) && (line[pos] == ' '))
@@ -170,12 +209,8 @@ namespace Minimalistic.Servers
 			if (httpHeaders.ContainsKey("Content-Length"))
 			{
 				var contentLen = Convert.ToInt32(httpHeaders["Content-Length"]);
-				if (contentLen > MaxPostSize)
-				{
-					throw new Exception(
-						String.Format("POST Content-Length({0}) too big for this simple server",
-						  contentLen));
-				}
+				if (contentLen > MaxPostSize) throw new ContentLengthException(contentLen);
+				
 				var buf = new byte[BufSize];
 				var toRead = contentLen;
 				while (toRead > 0)
@@ -190,7 +225,7 @@ namespace Minimalistic.Servers
 						{
 							break;
 						}
-						throw new Exception("client disconnected during post");
+						throw new PostClientDisconnectException();
 					}
 					toRead -= numread;
 					ms.Write(buf, 0, numread);
