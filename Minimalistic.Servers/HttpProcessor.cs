@@ -10,24 +10,24 @@ namespace Minimalistic.Servers
 {
 	public class HttpProcessor
 	{
-		public TcpClient Socket;
+		readonly TcpClient socket;
 		protected int Port;
 		TcpListener listener;
 
 		Stream inputStream;
-		public StreamWriter OutputStream;
+		StreamWriter outputStream;
 
-		public String HttpMethod;
-		public String HttpUrl;
-		public String HttpProtocolVersionstring;
-		public Hashtable HttpHeaders = new Hashtable();
+		String httpMethod;
+		String httpUrl;
+		String httpProtocolVersionstring;
+		readonly Hashtable httpHeaders = new Hashtable();
 
 
-		private const int MaxPostSize = 10 * 1024 * 1024; // 10MB
+		const int MaxPostSize = 10 * 1024 * 1024; // 10MB
 
 		public HttpProcessor(TcpClient s, int port)
 		{
-			Socket = s;
+			socket = s;
 			Port = port;
 		}
 
@@ -47,15 +47,15 @@ namespace Minimalistic.Servers
 			(new Thread(Listen)).Start();
 		}
 
-		public virtual void HandleGetRequest(HttpProcessor p) {}
+		protected virtual void HandleGetRequest(HttpProcessor p) { throw new NotImplementedException(); }
 
-		public virtual void HandlePostRequest(HttpProcessor p, StreamReader inputData) {}
+		protected virtual void HandlePostRequest(HttpProcessor p, StreamReader inputData) { throw new NotImplementedException(); }
 
-		public virtual void HandlePutRequest(HttpProcessor p, StreamReader inputData) {}
+		protected virtual void HandlePutRequest(HttpProcessor p, StreamReader inputData) { throw new NotImplementedException(); }
 
-		public virtual void HandleDeleteRequest(HttpProcessor p, StreamReader inputData) {}
+		protected virtual void HandleDeleteRequest(HttpProcessor p, StreamReader inputData) { throw new NotImplementedException(); }
 
-		private static string StreamReadLine(Stream inputStream)
+		static string StreamReadLine(Stream inputStream)
 		{
 			var data = "";
 			while (true)
@@ -74,23 +74,23 @@ namespace Minimalistic.Servers
 			}
 			return data;
 		}
-		public void Process()
+		void Process()
 		{
 			// we can't use a StreamReader for input, because it buffers up extra data on us inside it's
 			// "processed" view of the world, and we want the data raw after the headers
-			inputStream = new BufferedStream(Socket.GetStream());
+			inputStream = new BufferedStream(socket.GetStream());
 
 			// we probably shouldn't be using a streamwriter for all output from handlers either
-			OutputStream = new StreamWriter(new BufferedStream(Socket.GetStream()));
+			outputStream = new StreamWriter(new BufferedStream(socket.GetStream()));
 			try
 			{
 				ParseRequest();
 				ReadHeaders();
-				if (HttpMethod.Equals("GET"))
+				if (httpMethod.Equals("GET"))
 				{
 					HandleGetRequest();
 				}
-				else if (HttpMethod.Equals("POST"))
+				else if (httpMethod.Equals("POST"))
 				{
 					HandlePostRequest();
 				}
@@ -100,13 +100,13 @@ namespace Minimalistic.Servers
 				Console.WriteLine("Exception: " + e.ToString());
 				WriteFailure();
 			}
-			OutputStream.Flush();
+			outputStream.Flush();
 			// bs.Flush(); // flush any remaining output
-			inputStream = null; OutputStream = null; // bs = null;            
-			Socket.Close();
+			inputStream = null; outputStream = null; // bs = null;            
+			socket.Close();
 		}
 
-		public void ParseRequest()
+		void ParseRequest()
 		{
 			var request = StreamReadLine(inputStream);
 			var tokens = request.Split(' ');
@@ -114,14 +114,14 @@ namespace Minimalistic.Servers
 			{
 				throw new Exception("invalid http request line");
 			}
-			HttpMethod = tokens[0].ToUpper();
-			HttpUrl = tokens[1];
-			HttpProtocolVersionstring = tokens[2];
+			httpMethod = tokens[0].ToUpper();
+			httpUrl = tokens[1];
+			httpProtocolVersionstring = tokens[2];
 
 			Console.WriteLine("starting: " + request);
 		}
 
-		public void ReadHeaders()
+		void ReadHeaders()
 		{
 			Console.WriteLine("readHeaders()");
 			String line;
@@ -147,17 +147,17 @@ namespace Minimalistic.Servers
 
 				var value = line.Substring(pos, line.Length - pos);
 				Console.WriteLine("header: {0}:{1}", name, value);
-				HttpHeaders[name] = value;
+				httpHeaders[name] = value;
 			}
 		}
 
-		public void HandleGetRequest()
+		void HandleGetRequest()
 		{
 			HandleGetRequest(this);
 		}
 
-		private const int BufSize = 4096;
-		public void HandlePostRequest()
+		const int BufSize = 4096;
+		void HandlePostRequest()
 		{
 			// this post data processing just reads everything into a memory stream.
 			// this is fine for smallish things, but for large stuff we should really
@@ -167,9 +167,9 @@ namespace Minimalistic.Servers
 
 			Console.WriteLine("get post data start");
 			var ms = new MemoryStream();
-			if (HttpHeaders.ContainsKey("Content-Length"))
+			if (httpHeaders.ContainsKey("Content-Length"))
 			{
-				var contentLen = Convert.ToInt32(HttpHeaders["Content-Length"]);
+				var contentLen = Convert.ToInt32(httpHeaders["Content-Length"]);
 				if (contentLen > MaxPostSize)
 				{
 					throw new Exception(
@@ -202,27 +202,27 @@ namespace Minimalistic.Servers
 
 		}
 
-		public void WriteSuccess(string contentType = "text/html")
+		void WriteSuccess(string contentType = "text/html")
 		{
 			// this is the successful HTTP response line
-			OutputStream.WriteLine("HTTP/1.0 200 OK");
+			outputStream.WriteLine("HTTP/1.0 200 OK");
 			// these are the HTTP headers...          
-			OutputStream.WriteLine("Content-Type: " + contentType);
-			OutputStream.WriteLine("Connection: close");
+			outputStream.WriteLine("Content-Type: " + contentType);
+			outputStream.WriteLine("Connection: close");
 			// ..add your own headers here if you like
 
-			OutputStream.WriteLine("");	// this terminates the HTTP headers.. everything after this is HTTP body..
+			outputStream.WriteLine("");	// this terminates the HTTP headers.. everything after this is HTTP body..
 		}
 
-		public void WriteFailure()
+		void WriteFailure()
 		{
 			// this is an http 404 failure response
-			OutputStream.WriteLine("HTTP/1.0 404 File not found");
+			outputStream.WriteLine("HTTP/1.0 404 File not found");
 			// these are the HTTP headers
-			OutputStream.WriteLine("Connection: close");
+			outputStream.WriteLine("Connection: close");
 			// ..add your own headers here
 
-			OutputStream.WriteLine("");	// this terminates the HTTP headers.
+			outputStream.WriteLine("");	// this terminates the HTTP headers.
 		}
 	}
 }
