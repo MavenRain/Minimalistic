@@ -56,7 +56,8 @@ namespace Minimalistic.Servers
 
 		sealed class PostClientDisconnectException : Exception
 		{
-			public override string Message => "client disconnected during post";
+			public override string Message
+			{ get { return "client disconnected during post"; } }
 		}
 
 		internal HttpProcessor(TcpClient s, HttpServer srv)
