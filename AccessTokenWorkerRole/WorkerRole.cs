@@ -76,7 +76,7 @@ namespace AccessTokenWorkerRole
 			//	Trace.TraceInformation("Working");
 			//	await Task.Delay(1000, cancellationToken);	
 			//}
-			var vsoAccessTokenServer = new AccessTokenServer(new TcpClient(),
+			var vsoAccessTokenServer = new AccessTokenServer(
 					RoleEnvironment.CurrentRoleInstance.InstanceEndpoints["Default"].IPEndpoint.Address,
 					RoleEnvironment.CurrentRoleInstance.InstanceEndpoints["Default"].IPEndpoint.Port)
 			{

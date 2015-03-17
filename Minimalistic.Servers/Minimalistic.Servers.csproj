@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="AccessTokenServer.cs" />
     <Compile Include="HttpProcessor.cs" />
+    <Compile Include="HttpServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -11,9 +10,7 @@ namespace Minimalistic.Servers
 	public class HttpProcessor
 	{
 		readonly TcpClient socket;
-		private readonly IPAddress address;
-		protected int Port;
-		TcpListener listener;
+		protected HttpServer Srv;
 
 		Stream inputStream;
 		public StreamWriter OutputStream { get; protected set; }
@@ -60,36 +57,11 @@ namespace Minimalistic.Servers
 			public override string Message => "client disconnected during post";
 		}
 
-		protected HttpProcessor(TcpClient s, IPAddress addr, int port)
+		internal HttpProcessor(TcpClient s, HttpServer srv)
 		{
 			socket = s;
-			Port = port;
-			address = addr;
+			Srv = srv;
 		}
-
-		void Listen()
-		{
-			listener = new TcpListener(address, Port);
-			listener.Start();
-			while (true)
-			{
-				(new Thread((new HttpProcessor(listener.AcceptTcpClient(), address, Port)).Process)).Start();
-				Thread.Sleep(1);
-			}
-		}
-
-		public void Run()
-		{
-			(new Thread(Listen)).Start();
-		}
-
-		protected virtual void HandleGetRequest(HttpProcessor p) { throw new NotImplementedException(); }
-
-		protected virtual void HandlePostRequest(HttpProcessor p, StreamReader inputData) { throw new NotImplementedException(); }
-
-		protected virtual void HandlePutRequest(HttpProcessor p, StreamReader inputData) { throw new NotImplementedException(); }
-
-		protected virtual void HandleDeleteRequest(HttpProcessor p, StreamReader inputData) { throw new NotImplementedException(); }
 
 		static string StreamReadLine(Stream inputStream)
 		{
@@ -110,7 +82,7 @@ namespace Minimalistic.Servers
 			}
 			return data;
 		}
-		void Process()
+		internal void Process()
 		{
 			// we can't use a StreamReader for input, because it buffers up extra data on us inside it's
 			// "processed" view of the world, and we want the data raw after the headers
@@ -194,7 +166,7 @@ namespace Minimalistic.Servers
 
 		void HandleGetRequest()
 		{
-			HandleGetRequest(this);
+			Srv.HandleGetRequest(this);
 		}
 
 		const int BufSize = 4096;
@@ -235,7 +207,7 @@ namespace Minimalistic.Servers
 				ms.Seek(0, SeekOrigin.Begin);
 			}
 			Console.WriteLine("get post data end");
-			HandlePostRequest(this, new StreamReader(ms));
+			Srv.HandlePostRequest(this, new StreamReader(ms));
 
 		}
 

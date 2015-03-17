@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace Minimalistic.Servers
 {
-	public class AccessTokenServer : HttpProcessor
+	public class AccessTokenServer : HttpServer
 	{
 		public Uri TokenEndpoint { get; set; }
 
@@ -24,13 +24,13 @@ namespace Minimalistic.Servers
 
 		public AccessTokenRetrievalRequest RetrieveAccessToken { get; set; }
 
-		public AccessTokenServer(TcpClient socket, IPAddress address, int port) : base(socket, address, port)
+		public AccessTokenServer(IPAddress address, int port) : base(address, port)
 		{
 			StoreAccessToken = (storageEndpoint, accessToken) => { throw new NotImplementedException(); };
 			RetrieveAccessToken = (requestEndpoint, authorizationCode) => { throw new NotImplementedException(); };
 		}
 
-		protected sealed override void HandleGetRequest(HttpProcessor httpProcessor)
+		public sealed override void HandleGetRequest(HttpProcessor httpProcessor)
 		{
 			HandleGetRequestAsync(httpProcessor).ConfigureAwait(true);
 		}
@@ -38,15 +38,15 @@ namespace Minimalistic.Servers
 		async Task HandleGetRequestAsync(HttpProcessor httpProcessor)
 		{
 			httpProcessor.WriteSuccess();
-			if (HttpUtility.ParseQueryString((new Uri(HttpUrl)).Query).Count > 0)
-			{
-				RetrieveAccessToken(TokenRequestEndpoint, HttpUtility.ParseQueryString((new Uri(HttpUrl)).Query)["code"]);
-				return;
-			}
+			//if (HttpUtility.ParseQueryString((new Uri(HttpUrl)).Query).Count > 0)
+			//{
+			//	RetrieveAccessToken(TokenRequestEndpoint, HttpUtility.ParseQueryString((new Uri(HttpUrl)).Query)["code"]);
+			//	return;
+			//}
 			httpProcessor.OutputStream.Write(await (await (new HttpClient()).GetAsync(TokenEndpoint)).Content.ReadAsStringAsync());
 		}
 
-		protected sealed override void HandlePostRequest(HttpProcessor httpProcessor, StreamReader inputData)
+		public sealed override void HandlePostRequest(HttpProcessor httpProcessor, StreamReader inputData)
 		{
 			StoreAccessToken(TokenEndpoint, JsonConvert.DeserializeObject<Dictionary<string, string>>(inputData.ReadToEnd())["access_token"]);
 		}

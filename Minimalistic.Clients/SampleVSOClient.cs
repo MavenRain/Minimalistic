@@ -1,6 +1,6 @@
 ﻿namespace Minimalistic.Clients
 {
-	public static class SampleVSOClient
+	public static class SampleVsoClient
 	{
 		public static void RequestAccessToken()
 		{
