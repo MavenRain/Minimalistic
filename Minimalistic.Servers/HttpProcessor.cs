@@ -11,6 +11,7 @@ namespace Minimalistic.Servers
 	public class HttpProcessor
 	{
 		readonly TcpClient socket;
+		private readonly IPAddress address;
 		protected int Port;
 		TcpListener listener;
 
@@ -59,19 +60,20 @@ namespace Minimalistic.Servers
 			public override string Message => "client disconnected during post";
 		}
 
-		protected HttpProcessor(TcpClient s, int port)
+		protected HttpProcessor(TcpClient s, IPAddress addr, int port)
 		{
 			socket = s;
 			Port = port;
+			address = addr;
 		}
 
 		void Listen()
 		{
-			listener = new TcpListener(Dns.GetHostAddresses("localhost").First(), Port);
+			listener = new TcpListener(address, Port);
 			listener.Start();
 			while (true)
 			{
-				(new Thread((new HttpProcessor(listener.AcceptTcpClient(), Port)).Process)).Start();
+				(new Thread((new HttpProcessor(listener.AcceptTcpClient(), address, Port)).Process)).Start();
 				Thread.Sleep(1);
 			}
 		}

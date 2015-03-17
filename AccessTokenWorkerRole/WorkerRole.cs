@@ -22,34 +22,17 @@ namespace AccessTokenWorkerRole
 		{
 			Trace.TraceInformation("AccessTokenWorkerRole is running");
 
-			//try
-			//{
-			//	RunAsync(cancellationTokenSource.Token).Wait();
-			//}
-			//finally
-			//{
-			//	runCompleteEvent.Set();
-			//}
-
-			while (true)
+			try
 			{
-				var vsoAccessTokenServer = new AccessTokenServer(new TcpClient(), 8080)
-				{
-					StoreAccessToken =
-					(accessTokenStorageEndpoint, accessToken) =>
-					{
-						var table = CloudStorageAccount.Parse(CloudConfigurationManager.GetSetting("StorageConnectionString")).CreateCloudTableClient().GetTableReference("access");
-						if (table.CreateIfNotExists()) table.Execute(TableOperation.InsertOrReplace(new AccessTokenEntry { Token = accessToken }));
-					},
-					RetrieveAccessToken = (accessTokenRequestEndpoint, authorizationCode) =>
-					{
-						RetrieveAccessTokenAsync(accessTokenRequestEndpoint, authorizationCode).ConfigureAwait(true);
-					},
-					TokenRequestEndpoint = new Uri(CloudConfigurationManager.GetSetting("TokenRequestUrl")),
-					TokenEndpoint = new Uri(CloudConfigurationManager.GetSetting("TokenStorageUrl"))
-				};
-				vsoAccessTokenServer.Run();
+				RunAsync(cancellationTokenSource.Token).Wait();
 			}
+			finally
+			{
+				runCompleteEvent.Set();
+			}
+
+			
+			
 		}
 
 		public override bool OnStart()
@@ -85,14 +68,36 @@ namespace AccessTokenWorkerRole
 			await (new HttpClient()).PostAsync(endpoint + endpointTail, new ByteArrayContent(new byte[0]));
 		}
 
-		//static async Task RunAsync(CancellationToken cancellationToken)
-		//{
+		static async Task RunAsync(CancellationToken cancellationToken)
+		{
 			// TODO: Replace the following with your own logic.
 			//while (!cancellationToken.IsCancellationRequested)
 			//{
 			//	Trace.TraceInformation("Working");
-			//	await Task.Delay(1000, cancellationToken);
+			//	await Task.Delay(1000, cancellationToken);	
 			//}
-		//}
+			var vsoAccessTokenServer = new AccessTokenServer(new TcpClient(),
+					RoleEnvironment.CurrentRoleInstance.InstanceEndpoints["Default"].IPEndpoint.Address,
+					RoleEnvironment.CurrentRoleInstance.InstanceEndpoints["Default"].IPEndpoint.Port)
+			{
+				StoreAccessToken =
+						(accessTokenStorageEndpoint, accessToken) =>
+						{
+							var table =
+								CloudStorageAccount.Parse(CloudConfigurationManager.GetSetting("StorageConnectionString"))
+									.CreateCloudTableClient()
+									.GetTableReference("access");
+							if (table.CreateIfNotExists())
+								table.Execute(TableOperation.InsertOrReplace(new AccessTokenEntry { Token = accessToken }));
+						},
+				RetrieveAccessToken = (accessTokenRequestEndpoint, authorizationCode) =>
+				{
+					RetrieveAccessTokenAsync(accessTokenRequestEndpoint, authorizationCode).ConfigureAwait(true);
+				},
+				TokenRequestEndpoint = new Uri(CloudConfigurationManager.GetSetting("TokenRequestUrl")),
+				TokenEndpoint = new Uri(CloudConfigurationManager.GetSetting("TokenStorageUrl"))
+			};
+			vsoAccessTokenServer.Run();
+		}
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace Minimalistic.Servers
 
 		public AccessTokenRetrievalRequest RetrieveAccessToken { get; set; }
 
-		public AccessTokenServer(TcpClient socket, int port) : base(socket, port)
+		public AccessTokenServer(TcpClient socket, IPAddress address, int port) : base(socket, address, port)
 		{
 			StoreAccessToken = (storageEndpoint, accessToken) => { throw new NotImplementedException(); };
 			RetrieveAccessToken = (requestEndpoint, authorizationCode) => { throw new NotImplementedException(); };
