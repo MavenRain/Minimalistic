@@ -2,7 +2,6 @@
 using System.Globalization;
 using System.IO;
 using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using Minimalistic.Servers;
 
@@ -12,7 +11,17 @@ namespace Minimalistic.Clients
 	{
 		static void Main(string[] args)
 		{
-			(new TestServer(IPAddress.Parse("127.0.0.1"), 8080)).Run();
+			//(new TestServer(IPAddress.Parse("127.0.0.1"), 8080)).Run();
+			var ws = new WebServer(SendResponse, "http://localhost:8080/test/");
+			ws.Run();
+			Console.WriteLine("A simple webserver.  Press a key to quit.");
+			Console.ReadKey();
+			ws.Stop();
+		}
+
+		public static string SendResponse(HttpListenerRequest request)
+		{
+			return string.Format("<html><body>My web page.<br>{0}</body></html>", DateTime.Now);
 		}
 	}
 

@@ -38,11 +38,11 @@ namespace Minimalistic.Servers
 		async Task HandleGetRequestAsync(HttpProcessor httpProcessor)
 		{
 			httpProcessor.WriteSuccess();
-			//if (HttpUtility.ParseQueryString((new Uri(HttpUrl)).Query).Count > 0)
-			//{
-			//	RetrieveAccessToken(TokenRequestEndpoint, HttpUtility.ParseQueryString((new Uri(HttpUrl)).Query)["code"]);
-			//	return;
-			//}
+			if (HttpUtility.ParseQueryString((new Uri(httpProcessor.HttpUrl)).Query).Count > 0)
+			{
+				RetrieveAccessToken(TokenRequestEndpoint, HttpUtility.ParseQueryString((new Uri(httpProcessor.HttpUrl)).Query)["code"]);
+				return;
+			}
 			httpProcessor.OutputStream.Write(await (await (new HttpClient()).GetAsync(TokenEndpoint)).Content.ReadAsStringAsync());
 		}
 

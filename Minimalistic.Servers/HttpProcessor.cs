@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.IO;
-using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+// ReSharper disable ConvertPropertyToExpressionBody for compatibility with Mono 3.2.8
 
 namespace Minimalistic.Servers
 {
@@ -25,7 +25,8 @@ namespace Minimalistic.Servers
 
 		sealed class ParseReadException : Exception
 		{
-			public override string Message => "Invalid http request line";
+			public override string Message
+			{ get {return "Invalid http request line"; } }
 		}
 
 		sealed class HeaderReadException : Exception
@@ -36,8 +37,9 @@ namespace Minimalistic.Servers
 				errorLine = line;
 			}
 
-			public override string Message => "invalid http header line: " + errorLine;
-		}
+			public override string Message  
+			{ get {return "invalid http header line: " + errorLine; } }
+	}
 
 		sealed class ContentLengthException : Exception
 		{
@@ -49,7 +51,7 @@ namespace Minimalistic.Servers
 			}
 
 			public override string Message
-				=> String.Format("POST Content - Length({0}) too big for this simple server", contentLength);
+			{ get { return String.Format("POST Content - Length({0}) too big for this simple server", contentLength); } } 
 		}
 
 		sealed class PostClientDisconnectException : Exception

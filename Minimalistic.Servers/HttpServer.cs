@@ -11,9 +11,9 @@ namespace Minimalistic.Servers
 		protected readonly IPAddress Address;
 		protected int Port;
 		protected TcpListener Listener;
-		
 
-		public HttpServer(IPAddress addr, int port)
+
+		protected HttpServer(IPAddress addr, int port)
 		{
 			Address = addr;
 			Port = port;
