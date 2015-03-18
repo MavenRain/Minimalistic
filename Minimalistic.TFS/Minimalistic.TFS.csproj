@@ -66,6 +66,7 @@
     <Compile Include="BugModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReportFormatter.cs" />
+    <Compile Include="ReportHeaderModel.cs" />
     <Compile Include="TfsCommander.cs" />
     <Compile Include="TFSSampleClasses.cs" />
   </ItemGroup>
