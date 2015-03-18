@@ -2,7 +2,9 @@
 using System.Globalization;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using Minimalistic.Servers;
 
 namespace Minimalistic.Clients
@@ -22,6 +24,13 @@ namespace Minimalistic.Clients
 		public static string SendResponse(HttpListenerRequest request)
 		{
 			return string.Format("<html><body>My web page.<br>{0}</body></html>", DateTime.Now);
+		}
+
+		public static string GetAccessToken(HttpListenerRequest request)
+		{
+			var response = (new HttpClient()).GetAsync(
+				new Uri("https://app.vssps.visualstudio.com/oauth2/authorize?client_id=CAF90BC0-D1ED-4762-B40A-3CDCD8EF4F84&response_type=Assertion&state=User1&scope=vso.build_execute%20vso.chat_manage%20vso.code_manager%20vso.test_write%20vso.work_write&redirect_uri=https://vsoaccesstoken.cloudapp.net/test/"));
+			return "";
 		}
 	}
 

@@ -39,14 +39,14 @@ namespace Minimalistic.Servers
 
 		public void Run()
 		{
-			ThreadPool.QueueUserWorkItem((o) =>
+			ThreadPool.QueueUserWorkItem(o =>
 			{
 				Console.WriteLine("Webserver running...");
 				while (listener.IsListening)
 				{
 					try
 					{
-						ThreadPool.QueueUserWorkItem((c) =>
+						ThreadPool.QueueUserWorkItem(c =>
 						{
 							var ctx = c as HttpListenerContext;
 							if (ctx == null)
