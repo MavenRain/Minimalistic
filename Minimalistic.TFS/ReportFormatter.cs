@@ -4,21 +4,53 @@ namespace Minimalistic.TFS
 {
 	public static class ReportFormatter
 	{
+		public static string SegoeStyleSectionEmitter()
+		{
+			return ((new StringBuilder())
+				.Append("<style>")
+				.Append(".Segoe { font-family: Segoe UI, Arial, sans-serif; ")
+				.Append("margin-left: .5in; ")
+				.Append("font-weight: normal; }")
+				.Append("</style>")).ToString();
+		}
+
+		public static string BeginningOfDomEmitter()
+		{
+			return "<html>";
+		}
+
+		public static string EndOfDomEmitter()
+		{
+			return "</html>";
+		}
+
+		public static string BeginningOfHeadEmitter()
+		{
+			return "<head>";
+		}
+
+		public static string EndOfHeadEmitter()
+		{
+			return "</head>";
+		}
+
+		public static string BeginningOfBodyEmitter()
+		{
+			return "<body>";
+		}
+
+		public static string EndOfBodyEmitter()
+		{
+			return "</body>";
+		}
+		//Segoe style class assumed implemented externally
 		public static string BugReportEmitter(BugModel bug)
 		{
 			var reportBuilder = new StringBuilder();
-			reportBuilder.Append("<html><head>")
-			.Append("<style>")
-			.Append(".Segoe { font-family: Segoe UI, Arial, sans-serif; ")
-			.Append("margin-left: .5in; ")
-			.Append("font-weight: normal; }")
-			.Append("</style>")
-			.Append("</head>")
-			.Append("<body>")
-			.Append("<p class='Segoe'>")
-			.Append("<b><span>ID: </span></b>")
-			.Append(bug.Id.ToString())
-			.Append("<b><span><br>State:<span> </span></span></b> ");
+			reportBuilder.Append("<p class='Segoe'>")
+				.Append("<b><span>ID: </span></b>")
+				.Append(bug.Id.ToString())
+				.Append("<b><span><br>State:<span> </span></span></b> ");
 			switch (bug.State)
 			{
 				case State.New:
@@ -63,7 +95,7 @@ namespace Minimalistic.TFS
 			reportBuilder.Append("<br><b><span>STARTS Impact:</b><span> </span>")
 				.Append(bug.StartsImpact)
 				.Append("<b><br>Test Case: </b>")
-				.Append(bug.TestCase)
+				.Append(bug.TestCase.Description + " " + bug.TestCase.Device)
 				.Append("</span></p>")
 				.Append("<p class='Segoe'><b><span>Summary:</span></b></p>")
 				.Append("<p class='Segoe'><span>")
@@ -72,11 +104,39 @@ namespace Minimalistic.TFS
 				.Append("</span></p>")
 				.Append("<p class='Segoe'><b><span>Test Steps:</span></b></p>")
 				.Append("<ol type='1'>");
-			foreach (var step in bug.TestSteps) reportBuilder.Append("<li>" + step + "</li");
-			reportBuilder.Append("</ol>");
-            reportBuilder.Append("</body>")
-			.Append("</html>");
+			foreach (var step in bug.TestSteps) reportBuilder.Append("<li>" + step + "</li>");
+			reportBuilder.Append("</ol>")
+				.Append("<p class='Segoe'><b><span style='color:black;background:white'>Expected result:</span></b></p>")
+				.Append("<p class='Segoe'><span>" + bug.ExpectedResult + "</span></p>")
+				.Append("<p class='Segoe'><b><span style='color:black;background:white'>Actual result:</span></b></p>")
+				.Append("<p class='Segoe'><span>" + bug.ActualResult + "</span></p>");
 			return reportBuilder.ToString();
+		}
+
+		public static string ReportHeadingEmitter(ReportHeaderModel reportHeader)
+		{
+			return ((new StringBuilder())
+				.Append("<p class='Segoe'><b><span style='color:#0070C0>'")
+				.Append(reportHeader.Title)
+				.Append("</span></b>")
+				.Append("<br><span style='color:#1F497D'>")
+				.Append(reportHeader.ReviewingOrganization)
+				.Append("</span>")
+				.Append("<p class='Segoe'><b><span>Name:</span></b>")
+				.Append(reportHeader.Name + "<br>")
+				.Append("<b>Version: </b>")
+				.Append(reportHeader.Version + "<br>")
+				.Append("<b>Company: </b>")
+				.Append(reportHeader.Company + "<br>")
+				.Append("<b>VSO Project: </b>")
+				.Append("<a href='" + reportHeader.VsoProjectLink + "'>")
+				.Append(reportHeader.VsoProjectLink + "</a><br>")
+				.Append("<b>Windows OS Version: </b>")
+				.Append(reportHeader.WindowsOsVersion + "<br>")
+				.Append("<b>Review Completed: </b>")
+				.Append(reportHeader.ReviewCompletedDate + "<br>")
+				.Append("<b>Reviewed using: </b>")
+				.Append(reportHeader.ReviewedUsingDevices + "</p>")).ToString();
 		}
 	}
 }

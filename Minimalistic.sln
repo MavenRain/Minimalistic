@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalistic.Clients", "Min
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalistic.TFS", "Minimalistic.TFS\Minimalistic.TFS.csproj", "{B4A0C7F6-19E2-4C0A-B438-2DB131391DAD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalistic.TfsReportTesting", "Minimalistic.TfsReportTesting\Minimalistic.TfsReportTesting.csproj", "{CCD7472A-8EC9-4CA3-9B61-8FE56FE600E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{B4A0C7F6-19E2-4C0A-B438-2DB131391DAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4A0C7F6-19E2-4C0A-B438-2DB131391DAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4A0C7F6-19E2-4C0A-B438-2DB131391DAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCD7472A-8EC9-4CA3-9B61-8FE56FE600E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCD7472A-8EC9-4CA3-9B61-8FE56FE600E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCD7472A-8EC9-4CA3-9B61-8FE56FE600E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCD7472A-8EC9-4CA3-9B61-8FE56FE600E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -31,12 +31,25 @@ namespace Minimalistic.TFS
 
 	public class TestCase
 	{
+		public TestCase(string description, string device)
+		{
+			Description = description;
+			Device = device;
+		}
+		public TestCase() {}
 		public string Description { get; set; }
 		public string Device { get; set; }
 	}
 
 	public class Summary
 	{
+		public Summary(string description, string update)
+		{
+			Description = description;
+			Update = update;
+		}
+
+		public Summary() {}
 		public string Description { get; set; }
 		public string Update { get; set; }
 	}
