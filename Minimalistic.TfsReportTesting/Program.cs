@@ -24,7 +24,9 @@ namespace Minimalistic.TfsReportTesting
 			var report = new StringBuilder();
 			report.Append(ReportFormatter.BeginningOfDomEmitter())
 				.Append(ReportFormatter.BeginningOfHeadEmitter())
+				.Append(ReportFormatter.BeginningOfStyleSectionEmitter())
 				.Append(ReportFormatter.SegoeStyleSectionEmitter())
+				.Append(ReportFormatter.EndOfStyleSectionEmitter())
 				.Append(ReportFormatter.EndOfHeadEmitter())
 				.Append(ReportFormatter.BeginningOfBodyEmitter())
 				.Append(ReportFormatter.BugReportEmitter(bugModel))

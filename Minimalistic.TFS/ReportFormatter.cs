@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace Minimalistic.TFS
 {
@@ -7,11 +9,36 @@ namespace Minimalistic.TFS
 		public static string SegoeStyleSectionEmitter()
 		{
 			return ((new StringBuilder())
-				.Append("<style>")
 				.Append(".Segoe { font-family: Segoe UI, Arial, sans-serif; ")
 				.Append("margin-left: .5in; ")
-				.Append("font-weight: normal; }")
-				.Append("</style>")).ToString();
+				.Append("font-weight: normal; }")).ToString();
+		}
+
+		public static string TableGridStyleSectionEmitter()
+		{
+			return ((new StringBuilder())
+				.Append(".TableGrid { border: 1; cellspacing: 0; cellpadding: 0;")
+				.Append("margin-left:40.85pt; border-collapse: collapse;")
+				.Append("border-style: solid; padding: 0in 5.4pt 0in 5.4pt; }")).ToString();
+		}
+
+		public static string TableTextStyleEmitter()
+		{
+			return ((new StringBuilder())
+				.Append("td { vertical-align: top; border-style: solid;")
+				.Append("padding: 0in 5.4pt 0in 5.4pt; }")).ToString();
+		}
+
+		public static string TableTextFontSizeStyleEmitter()
+		{
+			return ((new StringBuilder())
+				.Append("td p b span { font-size:10.0pt; font-family: Segoe UI, Arial, sans-serif; }")).ToString();
+		}
+
+		public static string TableHeadingStyleEmitter()
+		{
+			return ((new StringBuilder())
+				.Append(".TableHeading { background: #BDD6EE; }")).ToString();
 		}
 
 		public static string BeginningOfDomEmitter()
@@ -32,6 +59,16 @@ namespace Minimalistic.TFS
 		public static string EndOfHeadEmitter()
 		{
 			return "</head>";
+		}
+
+		public static string BeginningOfStyleSectionEmitter()
+		{
+			return "<style>";
+		}
+
+		public static string EndOfStyleSectionEmitter()
+		{
+			return "</style>";
 		}
 
 		public static string BeginningOfBodyEmitter()
@@ -137,6 +174,49 @@ namespace Minimalistic.TFS
 				.Append(reportHeader.ReviewCompletedDate + "<br>")
 				.Append("<b>Reviewed using: </b>")
 				.Append(reportHeader.ReviewedUsingDevices + "</p>")).ToString();
+		}
+
+		public static string BugChartEmitter(IEnumerable<BugModel> listOfBugs)
+		{
+			var bugChart = new StringBuilder();
+			var bugs = listOfBugs as BugModel[] ?? listOfBugs.ToArray();
+			bugChart.Append("<table class='TableGrid'>")
+				.Append("<tr>")
+				.Append("<td class='TableHeading' width=60>")
+				.Append("<p style='text-align: center'><b><span>")
+				.Append("New")
+				.Append("</span></b></p></td>")
+				.Append("<td class='TableHeading' width=100>")
+				.Append("<p style='text-align: center'><b><span>")
+				.Append("Open")
+				.Append("</span></b></p></td>")
+				.Append("<td class='TableHeading' width=100>")
+				.Append("<p style='text-align: center'><b><span>")
+				.Append("Closed")
+				.Append("</span></b></p></td>")
+				.Append("<td class='TableHeading' width=60>")
+				.Append("<p style='text-align: center'><b><span>")
+				.Append("Total")
+				.Append("</span></b></p></td>")
+				.Append("</tr>")
+				.Append("<tr>")
+				.Append("<td width=60>")
+				.Append("<p style='text-align: center'><b><span style='color:red'>")
+				.Append(bugs.Count(bug => bug.State == State.New).ToString())
+				.Append("</span></b></p></td>")
+				.Append("<td width=100>")
+				.Append("<p style='text-align: center'><b><span style='color:#C55A11'>")
+				.Append(bugs.Count(bug => bug.State == State.Unresolved).ToString())
+				.Append("</span></b></p></td>")
+				.Append("<td width=100>")
+				.Append("<p style='text-align: center'><b><span style='color:#548235'>")
+				.Append(bugs.Count(bug => bug.State == State.Resolved).ToString())
+				.Append("</span></b></p></td>")
+				.Append("<td width=60>")
+				.Append("<p style='text-align: center'><b><span>")
+				.Append(bugs.Count().ToString())
+				.Append("</span></b></p></td></tr></table>");
+			return bugChart.ToString();
 		}
 	}
 }
