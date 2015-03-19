@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using Microsoft.TeamFoundation.Client;
@@ -24,10 +25,7 @@ namespace Minimalistic.TFS
 			var workItemType = ((teamProjectCollection.GetService<WorkItemStore>()).Projects[projectName]).WorkItemTypes["Bug"];
 			foreach (var discoveredBug in discoveredBugs)
 			{
-				var bug = new WorkItem(workItemType)
-				{
-					AreaId = discoveredBug.Id
-				};
+				var bug = new WorkItem(workItemType) {Title = Path.GetRandomFileName()};
 				(bug.Fields.Cast<Field>().Single(f => f.Name == "Acceptance Criteria")).Value = discoveredBug.Summary.Description + "\r\n" + discoveredBug.ExpectedResult + "\r\n" + discoveredBug.ActualResult;
 				bug.Save();
 			}

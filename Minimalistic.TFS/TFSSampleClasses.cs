@@ -37,7 +37,7 @@ namespace Minimalistic.TFS
 				client.DefaultRequestHeaders.Accept.Add(
 			   new MediaTypeWithQualityHeaderValue("application/json"));
 
-				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(
+				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes(
 							string.Format("{0}:{1}", ConfigurationManager.AppSettings["VSOUsername"], ConfigurationManager.AppSettings["VSOPassword"]))));
 
 				var uri = "https://dpeted.visualstudio.com/DefaultCollection/_api/_identity/ReadGroupMembers?__v=5&scope=aacd916a-ba75-4820-b582-731c9525fa5d&readMembers=true";
@@ -76,93 +76,94 @@ namespace Minimalistic.TFS
 	#region stuff
 	public class JsonAuthMetadataDocument
 	{
-		public string id { get; set; }
-		public string version { get; set; }
-		public string name { get; set; }
-		public string realm { get; set; }
-		public string serviceName { get; set; }
-		public string issuer { get; set; }
-		public string[] allowedAudiences { get; set; }
-		public JsonKey[] keys;
-		public JsonEndpoint[] endpoints;
+		public string Id { get; set; }
+		public string Version { get; set; }
+		public string Name { get; set; }
+		public string Realm { get; set; }
+		public string ServiceName { get; set; }
+		public string Issuer { get; set; }
+		public string[] AllowedAudiences { get; set; }
+		public JsonKey[] Keys;
+		public JsonEndpoint[] Endpoints;
 	}
 
 	public class JsonEndpoint
 	{
-		public string location { get; set; }
-		public string protocol { get; set; }
-		public string usage { get; set; }
+		public string Location { get; set; }
+		public string Protocol { get; set; }
+		public string Usage { get; set; }
 	}
 
 	public class JsonKey
 	{
-		public string usage { get; set; }
-		public JsonKeyValue keyValue { get; set; }
+		public string Usage { get; set; }
+		public JsonKeyValue KeyValue { get; set; }
 	}
 
 	public class JsonKeyValue
 	{
-		public string type { get; set; }
-		public string value { get; set; }
+		public string Type { get; set; }
+		public string Value { get; set; }
 	}
 
 	public class IdentityTokenRequest
 	{
-		public string token { get; set; }
+		public string Token { get; set; }
 	}
 
 	#endregion
 	public class AttachmentSampleServiceResponse
 	{
-		public string[] attachmentNames { get; set; }
-		public int attachmentsProcessed { get; set; }
+		public string[] AttachmentNames { get; set; }
+		public int AttachmentsProcessed { get; set; }
 	}
 
 	public class IdentityToken
 	{
-		public string msexchuid { get; set; }
-		public string amurl { get; set; }
-		public string uniqueID
-		{
-			get { return ComputeUniqueIdentification(); }
-		}
+		public string Msexchuid { get; set; }
+		public string Amurl { get; set; }
+		public string UniqueId => ComputeUniqueIdentification();
 
-		public string iss { get; set; }
-		public string x5t { get; set; }
-		public DateTime nbf { get; set; }
-		public DateTime exp { get; set; }
-		public string aud { get; set; }
-		public string version { get; set; }
-		public bool isbrowserhostedapp { get; set; }
-		public string appctxsender { get; set; }
+		public string Iss { get; set; }
+		public string X5T { get; set; }
+		public DateTime Nbf { get; set; }
+		public DateTime Exp { get; set; }
+		public string Aud { get; set; }
+		public string Version { get; set; }
+		public bool Isbrowserhostedapp { get; set; }
+		public string Appctxsender { get; set; }
 
 		// Salt to apply when creating unique ID.
-		private byte[] Salt = new byte[] { 25, 139, 201, 13 };
+		readonly byte[] salt = { 25, 139, 201, 13 };
 
-		private string ComputeUniqueIdentification()
+		string ComputeUniqueIdentification()
 		{
-			byte[] inputBytes = Encoding.ASCII.GetBytes(string.Concat(msexchuid, amurl));
+			var inputBytes = Encoding.ASCII.GetBytes(string.Concat(Msexchuid, Amurl));
 
 			// Combine input bytes and salt.
-			byte[] saltedInput = new byte[Salt.Length + inputBytes.Length];
-			Salt.CopyTo(saltedInput, 0);
-			inputBytes.CopyTo(saltedInput, Salt.Length);
+			var saltedInput = new byte[salt.Length + inputBytes.Length];
+			salt.CopyTo(saltedInput, 0);
+			inputBytes.CopyTo(saltedInput, salt.Length);
 
 			// Compute the unique key.
-			byte[] hashedBytes = SHA256CryptoServiceProvider.Create().ComputeHash(saltedInput);
+			var hashedBytes = SHA256.Create().ComputeHash(saltedInput);
 
 			// Convert the hashed value to a string and return.
 			return BitConverter.ToString(hashedBytes);
 		}
 
-		private JsonWebSecurityTokenHandler GetSecurityTokenHandler(string audience,
+		static JsonWebSecurityTokenHandler GetSecurityTokenHandler(string audience,
 			string authMetadataEndpoint,
 			X509Certificate2 currentCertificate)
 		{
-			JsonWebSecurityTokenHandler jsonTokenHandler = new JsonWebSecurityTokenHandler();
-			jsonTokenHandler.Configuration = new SecurityTokenHandlerConfiguration();
+			var jsonTokenHandler = new JsonWebSecurityTokenHandler
+			{
+				Configuration = new SecurityTokenHandlerConfiguration
+				{
+					AudienceRestriction = new AudienceRestriction(AudienceUriMode.Always)
+				}
+			};
 
-			jsonTokenHandler.Configuration.AudienceRestriction = new AudienceRestriction(AudienceUriMode.Always);
 			jsonTokenHandler.Configuration.AudienceRestriction.AllowedAudienceUris.Add(
 			  new Uri(audience, UriKind.RelativeOrAbsolute));
 
@@ -176,7 +177,7 @@ namespace Minimalistic.TFS
 			  new X509SecurityToken(currentCertificate)
 			})), false);
 
-			ConfigurationBasedIssuerNameRegistry issuerNameRegistry =
+			var issuerNameRegistry =
 				new ConfigurationBasedIssuerNameRegistry();
 			issuerNameRegistry.AddTrustedIssuer(currentCertificate.Thumbprint, "VSOBug");
 			jsonTokenHandler.Configuration.IssuerNameRegistry = issuerNameRegistry;
@@ -186,16 +187,15 @@ namespace Minimalistic.TFS
 
 		private X509Certificate2 GetSigningCertificate(Uri authMetadataEndpoint)
 		{
-			JsonAuthMetadataDocument document = GetMetadataDocument(authMetadataEndpoint);
+			var document = GetMetadataDocument(authMetadataEndpoint);
 
-			if (null != document.keys && document.keys.Length > 0)
+			if (null == document.Keys || document.Keys.Length <= 0)
+				throw new ApplicationException("The metadata document does not contain a signing certificate.");
+			var signingKey = document.Keys[0];
+
+			if (signingKey?.KeyValue != null)
 			{
-				JsonKey signingKey = document.keys[0];
-
-				if (null != signingKey && null != signingKey.keyValue)
-				{
-					return new X509Certificate2(Encoding.UTF8.GetBytes(signingKey.keyValue.value));
-				}
+				return new X509Certificate2(Encoding.UTF8.GetBytes(signingKey.KeyValue.Value));
 			}
 
 			throw new ApplicationException("The metadata document does not contain a signing certificate.");
@@ -207,17 +207,17 @@ namespace Minimalistic.TFS
 			// ServicePointManager.ServerCertificateValidationCallback = Config.CertificateValidationCallback;
 
 			byte[] acsMetadata;
-			using (WebClient webClient = new WebClient())
+			using (var webClient = new WebClient())
 			{
 				acsMetadata = webClient.DownloadData(authMetadataEndpoint);
 			}
-			string jsonResponseString = Encoding.UTF8.GetString(acsMetadata);
+			var jsonResponseString = Encoding.UTF8.GetString(acsMetadata);
 
-			JsonAuthMetadataDocument document = new JavaScriptSerializer().Deserialize<JsonAuthMetadataDocument>(jsonResponseString);
+			var document = new JavaScriptSerializer().Deserialize<JsonAuthMetadataDocument>(jsonResponseString);
 
 			if (null == document)
 			{
-				throw new ApplicationException(String.Format("No authentication metadata document found at {0}.", authMetadataEndpoint));
+				throw new ApplicationException(string.Format("No authentication metadata document found at {0}.", authMetadataEndpoint));
 			}
 
 			//using (WebClient webClient = new WebClient())
@@ -233,42 +233,37 @@ namespace Minimalistic.TFS
 
 		public IdentityToken(IdentityTokenRequest rawToken, string audience, string authMetadataEndpoint)
 		{
-			X509Certificate2 currentCertificate = null;
+			var currentCertificate = GetSigningCertificate(new Uri(authMetadataEndpoint));
 
-			currentCertificate = GetSigningCertificate(new Uri(authMetadataEndpoint));
-
-			JsonWebSecurityTokenHandler jsonTokenHandler =
+			var jsonTokenHandler =
 				GetSecurityTokenHandler(audience, authMetadataEndpoint, currentCertificate);
 
-			SecurityToken jsonToken = jsonTokenHandler.ReadToken(rawToken.token);
-			JsonWebSecurityToken webToken = (JsonWebSecurityToken)jsonToken;
+			var jsonToken = jsonTokenHandler.ReadToken(rawToken.Token);
+			var webToken = (JsonWebSecurityToken)jsonToken;
 
-			x5t = currentCertificate.Thumbprint;
-			iss = webToken.Issuer;
-			aud = webToken.Audience;
-			exp = webToken.ValidTo;
-			nbf = webToken.ValidFrom;
-			foreach (JsonWebTokenClaim claim in webToken.Claims)
+			X5T = currentCertificate.Thumbprint;
+			Iss = webToken.Issuer;
+			Aud = webToken.Audience;
+			Exp = webToken.ValidTo;
+			Nbf = webToken.ValidFrom;
+			foreach (var claim in webToken.Claims)
 			{
 				if (claim.ClaimType.Equals("appctxsender"))
 				{
-					appctxsender = claim.Value;
+					Appctxsender = claim.Value;
 				}
 
 				if (claim.ClaimType.Equals("isbrowserhostedapp"))
 				{
-					isbrowserhostedapp = claim.Value == "true";
+					Isbrowserhostedapp = claim.Value == "true";
 				}
 
-				if (claim.ClaimType.Equals("appctx"))
-				{
-					string[] appContextClaims = claim.Value.Split(',');
-					Dictionary<string, string> appContext =
-						new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(claim.Value);
-					amurl = appContext["amurl"];
-					msexchuid = appContext["msexchuid"];
-					version = appContext["version"];
-				}
+				if (!claim.ClaimType.Equals("appctx")) continue;
+				var appContext =
+					new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(claim.Value);
+				Amurl = appContext["amurl"];
+				Msexchuid = appContext["msexchuid"];
+				Version = appContext["version"];
 			}
 		}
 
@@ -278,19 +273,19 @@ namespace Minimalistic.TFS
 	internal class JsonToken
 	{
 		public bool IsValid;
-		public Dictionary<string, string> headerClaims;
-		public Dictionary<string, string> payloadClaims;
-		public string signature;
-		public Dictionary<string, string> appContext;
+		public Dictionary<string, string> HeaderClaims;
+		public Dictionary<string, string> PayloadClaims;
+		public string Signature;
+		public Dictionary<string, string> AppContext;
 
 		private void ValidateHeaderClaim(string key, string value)
 		{
-			if (!this.headerClaims.ContainsKey(key))
+			if (!HeaderClaims.ContainsKey(key))
 			{
 				throw new ApplicationException(String.Format("Header does not contain \"{0}\" claim.", key));
 			}
 
-			if (!value.Equals(this.headerClaims[key]))
+			if (!value.Equals(HeaderClaims[key]))
 			{
 				throw new ApplicationException(String.Format("\"{0}\" claim must be \"{0}\".", key, value));
 			}
@@ -301,33 +296,33 @@ namespace Minimalistic.TFS
 			ValidateHeaderClaim("typ", "JWT");
 			ValidateHeaderClaim("alg", "RS256");
 
-			if (!this.headerClaims.ContainsKey("x5t"))
+			if (!HeaderClaims.ContainsKey("x5t"))
 			{
 				throw new ApplicationException(String.Format("Header does not contain \"{0}\" claim.", "x5t"));
 			}
 		}
 		private void ValidateLifetime()
 		{
-			if (!this.payloadClaims.ContainsKey("nbf"))
+			if (!PayloadClaims.ContainsKey("nbf"))
 			{
 				throw new ApplicationException(
 				  String.Format("The \"{0}\" claim is missing from the token.", "nbf"));
 			}
 
-			if (!this.payloadClaims.ContainsKey("exp"))
+			if (!PayloadClaims.ContainsKey("exp"))
 			{
 				throw new ApplicationException(
 				  String.Format("The \"{0}\" claim is missing from the token.", "exp"));
 			}
 
-			DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+			var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-			TimeSpan padding = new TimeSpan(0, 5, 0);
+			var padding = new TimeSpan(0, 5, 0);
 
-			DateTime validFrom = unixEpoch.AddSeconds(int.Parse(this.payloadClaims["nbf"]));
-			DateTime validTo = unixEpoch.AddSeconds(int.Parse(this.payloadClaims["exp"]));
+			var validFrom = unixEpoch.AddSeconds(int.Parse(PayloadClaims["nbf"]));
+			var validTo = unixEpoch.AddSeconds(int.Parse(PayloadClaims["exp"]));
 
-			DateTime now = DateTime.UtcNow;
+			var now = DateTime.UtcNow;
 
 			if (now < (validFrom - padding))
 			{
@@ -341,7 +336,7 @@ namespace Minimalistic.TFS
 		}
 		private void ValidateMetadataLocation()
 		{
-			if (!this.appContext.ContainsKey("amurl"))
+			if (!AppContext.ContainsKey("amurl"))
 			{
 				throw new ApplicationException(String.Format("The \"{0}\" claim is missing from the token.", "amurl"));
 			}
@@ -351,7 +346,7 @@ namespace Minimalistic.TFS
 
 		private void ValidateAudience()
 		{
-			if (!this.payloadClaims.ContainsKey("aud"))
+			if (!PayloadClaims.ContainsKey("aud"))
 			{
 				throw new ApplicationException(String.Format("The \"{0}\" claim is missing from the application context.", "aud"));
 			}
@@ -364,38 +359,38 @@ namespace Minimalistic.TFS
 		{
 
 			// Assume that the token is invalid to start out.
-			this.IsValid = false;
+			IsValid = false;
 
 			// Set the private dictionaries that contain the claims.
-			this.headerClaims = header;
-			this.payloadClaims = payload;
-			this.signature = signature;
+			HeaderClaims = header;
+			PayloadClaims = payload;
+			Signature = signature;
 
 			// If there is no "appctx" claim in the token, throw an ApplicationException.
-			if (!this.payloadClaims.ContainsKey("appctx"))
+			if (!PayloadClaims.ContainsKey("appctx"))
 			{
 				throw new ApplicationException(String.Format("The {0} claim is not present.", "appctx"));
 			}
 
-			appContext = new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(payload["appctx"]);
+			AppContext = new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(payload["appctx"]);
 
 
 			// Validate the header fields.
-			this.ValidateHeader();
+			ValidateHeader();
 
 			// Determine whether the token is within its valid time.
-			this.ValidateLifetime();
+			ValidateLifetime();
 
 			// Validate that the token was sent to the correct URL.
-			this.ValidateAudience();
+			ValidateAudience();
 
 			// Make sure that the appctx contains an authentication
 			// metadata location.
-			this.ValidateMetadataLocation();
+			ValidateMetadataLocation();
 
 			// If the token passes all the validation checks, we
 			// can assume that it is valid.
-			this.IsValid = true;
+			IsValid = true;
 		}
 
 	}
@@ -403,11 +398,11 @@ namespace Minimalistic.TFS
 	{
 		public static Encoding TextEncoding = Encoding.UTF8;
 
-		private static char Base64PadCharacter = '=';
-		private static char Base64Character62 = '+';
-		private static char Base64Character63 = '/';
-		private static char Base64UrlCharacter62 = '-';
-		private static char Base64UrlCharacter63 = '_';
+		const char Base64PadCharacter = '=';
+		const char Base64Character62 = '+';
+		const char Base64Character63 = '/';
+		const char Base64UrlCharacter62 = '-';
+		const char Base64UrlCharacter63 = '_';
 
 		private static byte[] DecodeBytes(string arg)
 		{
@@ -416,11 +411,11 @@ namespace Minimalistic.TFS
 				throw new ApplicationException("String to decode cannot be null or empty.");
 			}
 
-			StringBuilder s = new StringBuilder(arg);
+			var s = new StringBuilder(arg);
 			s.Replace(Base64UrlCharacter62, Base64Character62);
 			s.Replace(Base64UrlCharacter63, Base64Character63);
 
-			int pad = s.Length % 4;
+			var pad = s.Length % 4;
 			s.Append(Base64PadCharacter, (pad == 0) ? 0 : 4 - pad);
 
 			return Convert.FromBase64String(s.ToString());
@@ -433,7 +428,7 @@ namespace Minimalistic.TFS
 
 		public static JsonToken ValidateToken(string token)
 		{
-			JsonToken jsonToken = Decode(token);
+			var jsonToken = Decode(token);
 
 			return jsonToken;
 		}
@@ -441,24 +436,24 @@ namespace Minimalistic.TFS
 
 		public static JsonToken Decode(string rawToken)
 		{
-			string[] tokenParts = rawToken.Split('.');
+			var tokenParts = rawToken.Split('.');
 
 			if (tokenParts.Length != 3)
 			{
 				throw new ApplicationException("Token must have three parts separated by '.' characters.");
 			}
 
-			string encodedHeader = tokenParts[0];
-			string encodedPayload = tokenParts[1];
-			string signature = tokenParts[2];
+			var encodedHeader = tokenParts[0];
+			var encodedPayload = tokenParts[1];
+			var signature = tokenParts[2];
 
-			string decodedHeader = Base64Decode(encodedHeader);
-			string decodedPayload = Base64Decode(encodedPayload);
+			var decodedHeader = Base64Decode(encodedHeader);
+			var decodedPayload = Base64Decode(encodedPayload);
 
-			JavaScriptSerializer serializer = new JavaScriptSerializer();
+			var serializer = new JavaScriptSerializer();
 
-			Dictionary<string, string> header = serializer.Deserialize<Dictionary<string, string>>(decodedHeader);
-			Dictionary<string, string> payload = serializer.Deserialize<Dictionary<string, string>>(decodedPayload);
+			var header = serializer.Deserialize<Dictionary<string, string>>(decodedHeader);
+			var payload = serializer.Deserialize<Dictionary<string, string>>(decodedPayload);
 
 			return new JsonToken(header, payload, signature);
 		}
@@ -467,15 +462,12 @@ namespace Minimalistic.TFS
 	}
 	public class AppController
 	{
-		private string StripHTML(string source)
+		static string StripHtml(string source)
 		{
-
-			string result;
-
 			// Remove HTML Development formatting
 			// Replace line breaks with space
 			// because browsers inserts space
-			result = source.Replace("\r", " ");
+			var result = source.Replace("\r", " ");
 			// Replace line breaks with space
 			// because browsers inserts space
 			result = result.Replace("\n", " ");
@@ -624,10 +616,10 @@ namespace Minimalistic.TFS
 					 "(\r)(\t)+", "\r\t",
 					 RegexOptions.IgnoreCase);
 			// Initial replacement target string for line breaks
-			string breaks = "\r\r\r";
+			var breaks = "\r\r\r";
 			// Initial replacement target string for tabs
-			string tabs = "\t\t\t\t\t";
-			for (int index = 0; index < result.Length; index++)
+			var tabs = "\t\t\t\t\t";
+			for (var index = 0; index < result.Length; index++)
 			{
 				result = result.Replace(breaks, "\r\r");
 				result = result.Replace(tabs, "\t\t\t\t");
@@ -648,16 +640,16 @@ namespace Minimalistic.TFS
 		//Stub class (OEO 2015.03.17)
 		public class NewBugResponse
 		{
-			public int ID { get; set; }
+			public int Id { get; set; }
 		}
 
 		//Stub class (OEO 2015.03.17)
 		public class NewBugRequest
 		{
 			public string Token;
-			public string EWSUrl;
+			public string EwsUrl;
 			public string AttachmentToken;
-			public ItemId ItemID { get; set; }
+			public ItemId ItemId { get; set; }
 			public string Title;
 			public string Area;
 			public string AssignedTo;
@@ -686,7 +678,7 @@ namespace Minimalistic.TFS
 		//Stub class (OEO 2015.03.17)
 		public enum ExchangeVersion
 		{
-			Exchange2007_SP1
+			Exchange2007Sp1
 		}
 
 		//Stub class (OEO 2015.03.17)
@@ -702,8 +694,6 @@ namespace Minimalistic.TFS
 			{
 				return new EmailMessage();
 			}
-
-			public EmailMessage() {}
 
 			public void Load(PropertySet ps) {}
 
@@ -751,126 +741,92 @@ namespace Minimalistic.TFS
 		// POST api/<controller>
 		public NewBugResponse App(NewBugRequest bugData)
 		{
-			try
+			var idtoken = (AppIdentityToken)AuthToken.Parse(bugData.Token);
+			idtoken.Validate(new Uri("https://testoutlookaddin.azurewebsites.net/AppRead/Home/Home.html"));
+
+			var service = new ExchangeService(ExchangeVersion.Exchange2007Sp1)
 			{
-				AppIdentityToken idtoken = (AppIdentityToken)AuthToken.Parse(bugData.Token);
-				idtoken.Validate(new Uri("https://testoutlookaddin.azurewebsites.net/AppRead/Home/Home.html"));
+				Url = new Uri(bugData.EwsUrl),
+				Credentials = new OAuthCredentials(bugData.AttachmentToken)
+			};
 
-				JsonToken token = TokenValidator.ValidateToken(bugData.Token);
-				IdentityTokenRequest tokenRequest = new IdentityTokenRequest();
-				tokenRequest.token = bugData.Token;
 
-				IdentityToken identityToken = new IdentityToken(tokenRequest, token.payloadClaims["aud"], token.appContext["amurl"]);
+			var message = EmailMessage.Bind(service, new ItemId(bugData.ItemId), new PropertySet(BasePropertySet.IdOnly, ItemSchema.Attachments));
+			message.Load(new PropertySet(BasePropertySet.FirstClassProperties, ItemSchema.Attachments));
 
-				ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2007_SP1);
+			var collectionUri = new Uri("https://dpeted.visualstudio.com/DefaultCollection");
+			const string projectName = "TED Devices and Services";
+			const string baseAreaPath = projectName + @"\";
 
-				service.Url = new Uri(bugData.EWSUrl);
-				service.Credentials = new OAuthCredentials(bugData.AttachmentToken);
+			var netCred = new NetworkCredential(ConfigurationManager.AppSettings["VSOUsername"], ConfigurationManager.AppSettings["VSOPassword"]);
+			var basicCred = new BasicAuthCredential(netCred);
+			var tfsCred = new TfsClientCredentials(basicCred) {AllowInteractive = false};
+			var tpc = new TfsTeamProjectCollection(collectionUri, tfsCred);
 
-				EmailMessage message = EmailMessage.Bind(service, new ItemId(bugData.ItemID), new PropertySet(BasePropertySet.IdOnly, ItemSchema.Attachments));
-				message.Load(new PropertySet(BasePropertySet.FirstClassProperties, ItemSchema.Attachments));
+			tpc.Authenticate();
 
-				Uri collectionUri = new Uri("https://dpeted.visualstudio.com/DefaultCollection");
-				string projectName = "TED Devices and Services";
-				string baseAreaPath = projectName + @"\";
+			var workItemStore = tpc.GetService<WorkItemStore>();
+			var teamProject = workItemStore.Projects[projectName];
+			var workItemType = teamProject.WorkItemTypes["Bug"];
 
-				NetworkCredential netCred = new NetworkCredential(ConfigurationManager.AppSettings["VSOUsername"], ConfigurationManager.AppSettings["VSOPassword"]);
-				BasicAuthCredential basicCred = new BasicAuthCredential(netCred);
-				TfsClientCredentials tfsCred = new TfsClientCredentials(basicCred);
-				tfsCred.AllowInteractive = false;
-				var tpc = new TfsTeamProjectCollection(collectionUri, tfsCred);
+			// Create the work item
+			var bug = new WorkItem(workItemType)
+			{
+				Title = bugData.Title,
+				AreaPath = baseAreaPath + bugData.Area,
+			};
 
-				tpc.Authenticate();
 
-				var workItemStore = tpc.GetService<WorkItemStore>();
-				var teamProject = workItemStore.Projects[projectName];
-				var workItemType = teamProject.WorkItemTypes["Bug"];
+			var reproStepsField = bug.Fields.Cast<Field>().Single(f => f.Name == "Repro Steps");
+			reproStepsField.Value = StripHtml(message.Body.Text);
 
-				// Create the work item
-				WorkItem bug = new WorkItem(workItemType)
+
+			var filesToDelete = new List<string>();
+
+			var name = Guid.NewGuid() + ".html";
+			var htmlFilePath = HttpContext.Current.Server.MapPath("~/" + name);
+			using (var fs = File.OpenWrite(htmlFilePath))
+			{
+				var sr = new StreamWriter(fs);
+				sr.WriteLine(message.Body.Text);
+				fs.Flush();
+				filesToDelete.Add(htmlFilePath);
+			}
+
+
+			bug.Attachments.Add(new Microsoft.TeamFoundation.WorkItemTracking.Client.Attachment(htmlFilePath));
+
+
+
+
+			foreach (var attachment in message.Attachments)
+			{
+				if (!bugData.Attachments.Contains(attachment.Id)) continue;
+				if (!(attachment is FileAttachment)) continue;
+				var fileAttachment = attachment as FileAttachment;
+				fileAttachment.Load();
+
+				var filePath = HttpContext.Current.Server.MapPath("~/" + attachment.Name);
+				using (var fs = File.OpenWrite(filePath))
 				{
-					Title = bugData.Title,
-					AreaPath = baseAreaPath + bugData.Area,
-				};
-
-
-				var reproStepsField = bug.Fields.Cast<Field>().Single(f => f.Name == "Repro Steps");
-				reproStepsField.Value = StripHTML(message.Body.Text);
-
-
-				List<string> filesToDelete = new List<string>();
-
-				var name = Guid.NewGuid() + ".html";
-				string htmlFilePath = HttpContext.Current.Server.MapPath("~/" + name);
-				using (FileStream fs = File.OpenWrite(htmlFilePath))
-				{
-					StreamWriter sr = new StreamWriter(fs);
-					sr.WriteLine(message.Body.Text);
+					fs.Write(fileAttachment.Content, 0, fileAttachment.Content.Length);
 					fs.Flush();
-					filesToDelete.Add(htmlFilePath);
+					filesToDelete.Add(filePath);
 				}
 
 
-				bug.Attachments.Add(new Microsoft.TeamFoundation.WorkItemTracking.Client.Attachment(htmlFilePath));
-
-
-
-
-				foreach (Attachment attachment in message.Attachments)
-				{
-					if (bugData.Attachments.Contains(attachment.Id))
-					{
-						if (attachment is FileAttachment)
-						{
-
-							FileAttachment fileAttachment = attachment as FileAttachment;
-							fileAttachment.Load();
-
-							string filePath = HttpContext.Current.Server.MapPath("~/" + attachment.Name);
-							using (FileStream fs = File.OpenWrite(filePath))
-							{
-								fs.Write(fileAttachment.Content, 0, fileAttachment.Content.Length);
-								fs.Flush();
-								filesToDelete.Add(filePath);
-							}
-
-
-							bug.Attachments.Add(new Microsoft.TeamFoundation.WorkItemTracking.Client.Attachment(filePath));
-
-						}
-					}
-				}
-				bug.Fields["Assigned To"].Value = bugData.AssignedTo;
-				bug.History = bugData.Notes;
-
-
-				var validation = bug.Validate();
-				bug.Save();
-
-				foreach (string f in filesToDelete)
-				{
-					try
-					{
-						File.Delete(f);
-					}
-					catch (Exception Exception)
-					{
-
-					}
-				}
-
-
-
-				NewBugResponse response = new NewBugResponse();
-				response.ID = bug.Id;
-
-				return response;
+				bug.Attachments.Add(new Microsoft.TeamFoundation.WorkItemTracking.Client.Attachment(filePath));
 			}
-			catch (Exception ex)
-			{
-				throw ex;
+			bug.Fields["Assigned To"].Value = bugData.AssignedTo;
+			bug.History = bugData.Notes;
 
-			}
+
+			bug.Validate();
+			bug.Save();
+
+			foreach (var f in filesToDelete) File.Delete(f); 
+
+			return new NewBugResponse { Id = bug.Id };
 		}
 
 
