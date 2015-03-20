@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalistic.TfsReportTesti
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalistic.Scripting", "Minimalistic.Scripting\Minimalistic.Scripting.csproj", "{964F460E-AE96-4307-B5DA-562FABAD5189}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalistic.UX.QedLabInstallationAndReporting", "Minimalistic.UX.QedLabInstallationAndReporting\Minimalistic.UX.QedLabInstallationAndReporting.csproj", "{B55E07E0-2EB1-4B3A-94DF-8035E0C2B82D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{964F460E-AE96-4307-B5DA-562FABAD5189}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{964F460E-AE96-4307-B5DA-562FABAD5189}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{964F460E-AE96-4307-B5DA-562FABAD5189}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B55E07E0-2EB1-4B3A-94DF-8035E0C2B82D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B55E07E0-2EB1-4B3A-94DF-8035E0C2B82D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B55E07E0-2EB1-4B3A-94DF-8035E0C2B82D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B55E07E0-2EB1-4B3A-94DF-8035E0C2B82D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
