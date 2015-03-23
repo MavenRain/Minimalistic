@@ -1,29 +1,81 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using Minimalistic.TFS;
 
 namespace Minimalistic.UX.QedLabInstallationAndReporting
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class BugReporter : Window
+    public partial class BugReporter
     {
+	    readonly ObservableCollection<BugModel> stagedBugs; 
         public BugReporter()
         {
             InitializeComponent();
             (new PackageInstaller()).Show();
+			stagedBugs = new ObservableCollection<BugModel>();
+	        Bugs.ItemsSource = stagedBugs;
         }
-    }
+
+		void AddBugToList_Click(object sender, RoutedEventArgs e)
+		{
+			stagedBugs.Add(new BugModel
+			{ ActualResult = ActualBehavior.Text,
+				ExpectedResult = ExpectedBehavior.Text,
+				Id = Convert.ToInt32(BugId.Text),
+				Severity = ParseSeverity(SeveritySelector.Text),
+				StartsImpact = StartsStatus.Text,
+				State = ParseState(StateSelector.Text),
+				Summary = new Summary
+				{
+					Description = TestCaseSummary.Text,
+					Update = TestCaseUpdate.Text
+				},
+				TestCase = new TestCase
+				{
+					Description = TestCaseDescription.Text,
+					Device = TestCaseDevice.Text
+				},
+				TestSteps = TestSteps.Text
+			});
+		}
+
+	    static Severity ParseSeverity(string severity)
+	    {
+		    switch (severity)
+		    {
+				case "High":
+					return Severity.High;
+				case "Medium":
+				    return Severity.Medium;
+				case "Low":
+					return Severity.Low;
+				default:
+				    return Severity.High;
+		    }
+	    }
+
+	    static State ParseState(string state)
+	    {
+		    switch (state)
+		    {
+				case "New":
+					return State.New;
+				case "Unresolved":
+				    return State.Unresolved;
+				case "Resolved":
+				    return State.Resolved;
+				default:
+					return State.New;
+		    }
+	    }
+
+		void RemoveBugFromList_Click(object sender, RoutedEventArgs e)
+		{
+			foreach (var item in Bugs.SelectedItems) Bugs.SelectedItems.Remove(item);
+		}
+	}
 }

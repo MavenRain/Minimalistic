@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.ComponentModel;
 
 namespace Minimalistic.TFS
 {
@@ -23,7 +23,7 @@ namespace Minimalistic.TFS
 		public string StartsImpact { get; set; }
 		public TestCase TestCase { get; set; }
 		public Summary Summary { get; set; }
-		public List<string> TestSteps { get; set; }
+		public string TestSteps { get; set; }
 		public string ExpectedResult { get; set; }
 		public string ActualResult { get; set; }
 
