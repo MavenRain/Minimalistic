@@ -69,7 +69,7 @@ namespace Minimalistic.UX.QedLabInstallationAndReporting
 				    return State.Resolved;
 				default:
 					return State.New;
-		    }
+		    }   
 	    }
 
 		void RemoveBugFromList_Click(object sender, RoutedEventArgs e)

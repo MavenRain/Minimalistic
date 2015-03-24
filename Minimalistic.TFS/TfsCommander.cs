@@ -8,24 +8,39 @@ using Microsoft.TeamFoundation.WorkItemTracking.Client;
 
 namespace Minimalistic.TFS
 {
-	public static class TfsCommander
+	public class TfsCommander
 	{
-		public static void CommitBugsToServer(IEnumerable<BugModel> discoveredBugs, string username, string password, string vsoAccountName, string projectName)
+		readonly IEnumerable<BugModel> bugList;
+		IEnumerable<Project> projectList;
+		readonly TfsTeamProjectCollection teamProjectCollection;
+
+		public TfsCommander(ICredentials credential, string serverName, IEnumerable<BugModel> bugModel,
+			IEnumerable<Project> projects)
 		{
-			//Step 1: Authenticate requester
-			var credentials = new TfsClientCredentials(new BasicAuthCredential(new NetworkCredential(username, password)))
+			bugList = bugModel;
+			projectList = projects;
+
+			//Heavily loaded constructor, but useless object results if authorization is unsuccessful
+			var tfsCredentials = new TfsClientCredentials(new BasicAuthCredential(credential))
 			{
 				AllowInteractive = false
 			};
-			var endpoint = new Uri("https://" + vsoAccountName + ".visualstudio.com/DefaultCollection");
-			var teamProjectCollection = new TfsTeamProjectCollection(endpoint, credentials);
+			var endpoint = new Uri("https://" + serverName + ".visualstudio.com/DefaultCollection");
+			teamProjectCollection = new TfsTeamProjectCollection(endpoint, tfsCredentials);
 			teamProjectCollection.Authenticate();
-
-			//Step 2: Generate project work items
+		}
+		public CommandStatus CommitBugsToServer(string projectName)
+		{
 			var workItemType = ((teamProjectCollection.GetService<WorkItemStore>()).Projects[projectName]).WorkItemTypes["Bug"];
-			foreach (var discoveredBug in discoveredBugs)
+			foreach (var discoveredBug in bugList)
 			{
 				var bug = new WorkItem(workItemType) {Title = discoveredBug.Summary.Description};
+				if (bug.Validate().Count > 0)
+					return new CommandStatus
+					{
+						Result = CommandStatusResult.Failure,
+						Message = "The following work item fields failed validation: " + bug.Validate().Cast<Field>()
+					};
 				var report = new StringBuilder();
 				report.Append(ReportFormatter.BeginningOfDomEmitter())
 					.Append(ReportFormatter.BeginningOfHeadEmitter())
@@ -55,20 +70,13 @@ namespace Minimalistic.TFS
 				}
 				bug.State = "New";
 				(bug.Fields.Cast<Field>().Single(f => f.Name == "Acceptance Criteria")).Value = report.ToString();
-				bug.Save();
+				bug.Save();	
 			}
+			return new CommandStatus() { Result = CommandStatusResult.Success, Message = "Save completed" };
 		}
 
-	    public static void CommitReportToServer(IEnumerable<BugModel> discoveredBugs, ReportHeaderModel reportHeaderModel, string username, string password,
-	        string vsoAccountName, string projectName)
+	    public void CommitReportToServer(string projectName)
 	    {
-	        var credentials = new TfsClientCredentials(new BasicAuthCredential(new NetworkCredential(username, password)))
-			{
-				AllowInteractive = false
-			};
-			var endpoint = new Uri("https://" + vsoAccountName + ".visualstudio.com/DefaultCollection");
-			var teamProjectCollection = new TfsTeamProjectCollection(endpoint, credentials);
-			teamProjectCollection.Authenticate();
 	        var bug =
 	            new WorkItem(
 	                ((teamProjectCollection.GetService<WorkItemStore>()).Projects[projectName]).WorkItemTypes["Bug"]);
@@ -83,9 +91,8 @@ namespace Minimalistic.TFS
 			    .Append(ReportFormatter.TableTextFontSizeStyleEmitter())
 			    .Append(ReportFormatter.EndOfStyleSectionEmitter())
 			    .Append(ReportFormatter.EndOfHeadEmitter())
-			    .Append(ReportFormatter.BeginningOfBodyEmitter())
-			    .Append(ReportFormatter.ReportHeadingEmitter(reportHeaderModel));
-		    foreach (var discoveredBug in discoveredBugs) report.Append(ReportFormatter.BugReportEmitter(discoveredBug));
+			    .Append(ReportFormatter.BeginningOfBodyEmitter());
+		    foreach (var discoveredBug in bugList) report.Append(ReportFormatter.BugReportEmitter(discoveredBug));
 		    report.Append(ReportFormatter.EndOfBodyEmitter())
 			    .Append(ReportFormatter.EndOfDomEmitter());
 			bug.State = "New";
@@ -93,5 +100,7 @@ namespace Minimalistic.TFS
 			(bug.Fields.Cast<Field>().Single(f => f.Name == "Acceptance Criteria")).Value = report.ToString();
 				bug.Save();
 	    }
+
+		
 	}
 }
