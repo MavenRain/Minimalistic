@@ -31,7 +31,7 @@ namespace Minimalistic.TfsReportTesting
                 State = State.New,
                 Summary = new Summary("description", "update"),
                 TestCase = new TestCase("description", "device"),
-                TestSteps = new List<string> { "FirstTest", "SecondTest", "ThirdTest" }
+                TestSteps = "FirstTest"
             };
             var bugCollection = new List<BugModel> { bugModel, bugModel, bugModel, bugModel };
             var report = new StringBuilder();

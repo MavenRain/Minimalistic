@@ -75,7 +75,13 @@ namespace Minimalistic.UX.QedLabInstallationAndReporting
 
 		void RemoveBugFromList_Click(object sender, RoutedEventArgs e)
 		{
-			foreach (var item in Bugs.SelectedItems) Bugs.SelectedItems.Remove(item);
+			if (Bugs.SelectedItem == null) return;
+			stagedBugs.Remove((BugModel) Bugs.SelectedItem);
+		}
+
+		void CommitBugList_Click(object sender, RoutedEventArgs e)
+		{
+			(new TfsCommander()).CommitBugsToServer(stagedBugs,"Onyeka.Obi@gmail.com","","solomonrain", "TFSTestProject");
 		}
 	}
 }

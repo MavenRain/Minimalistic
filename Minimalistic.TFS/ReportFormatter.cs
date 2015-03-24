@@ -140,9 +140,9 @@ namespace Minimalistic.TFS
                 .Append("<br>" + bug.Summary.Update)
                 .Append("</span></p>")
                 .Append("<p class='Segoe'><b><span>Test Steps:</span></b></p>")
-                .Append("<ol type='1'>");
-            foreach (var step in bug.TestSteps) reportBuilder.Append("<li style='margin-left: .5in'>" + step + "</li>");
-            reportBuilder.Append("</ol>")
+                .Append("<p class='Segoe'><span>")
+				.Append("<br>" + bug.TestSteps)
+				.Append("</span></p>")
                 .Append("<p class='Segoe'><b><span style='color:black;background:white'>Expected result:</span></b></p>")
                 .Append("<p class='Segoe'><span>" + bug.ExpectedResult + "</span></p>")
                 .Append("<p class='Segoe'><b><span style='color:black;background:white'>Actual result:</span></b></p>")

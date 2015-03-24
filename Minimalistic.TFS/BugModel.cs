@@ -1,12 +1,10 @@
-﻿using System.ComponentModel;
-
-namespace Minimalistic.TFS
+﻿namespace Minimalistic.TFS
 {
 	public enum State
 	{
-		New,
-		Unresolved,
-		Resolved
+		New = 2,
+		Unresolved = 3,
+		Resolved = 4
 	}
 
 	public enum Severity

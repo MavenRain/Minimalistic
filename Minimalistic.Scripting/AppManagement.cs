@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Management.Automation;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Minimalistic.Scripting
 {
@@ -37,7 +32,7 @@ namespace Minimalistic.Scripting
 
         public static void InstallStoreApp(string path)
         {
-            string script = "Add-AppxPackage " + path;
+            var script = "Add-AppxPackage " + path;
             PowerShell.Create().AddScript(script).Invoke();
         }
     }

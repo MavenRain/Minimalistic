@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:tfs="clr-namespace:Minimalistic.TFS;assembly=Minimalistic.TFS"
         mc:Ignorable="d"
         Title="BugReporter" Height="1086.418" Width="1013.358">
 	<Grid>
@@ -41,13 +40,14 @@
 		<TextBox x:Name="ActualBehavior" HorizontalAlignment="Left" Height="77" Margin="205,897,0,0" TextWrapping="Wrap" Text="" FontSize="18" VerticalAlignment="Top" Width="395"/>
 		<Button x:Name="AddBugToList" Content="Add Bug" FontSize="18" HorizontalAlignment="Left" Margin="698,337,0,0" VerticalAlignment="Top" Width="237" Height="53" Click="AddBugToList_Click"/>
 		<Button x:Name="RemoveBugFromList" Content="Remove Bug" FontSize="18" HorizontalAlignment="Left" Margin="698,412,0,0" VerticalAlignment="Top" Width="237" Height="50" Click="RemoveBugFromList_Click"/>
-		<ListBox x:Name="Bugs" HorizontalAlignment="Left" Height="277" Margin="698,29,0,0" VerticalAlignment="Top" Width="237">
+		<ListBox x:Name="Bugs" HorizontalAlignment="Left" Height="277" Margin="698,29,0,0" VerticalAlignment="Top" Width="237" SelectionMode="Single">
 			<ListBox.ItemTemplate>
 				<DataTemplate>
 					<TextBlock Text="{Binding Path=Id}"/>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
 		</ListBox>
+		<Button x:Name="CommitBugList" Content="Commit Bug List" FontSize="18" HorizontalAlignment="Left" Margin="698,497,0,0" VerticalAlignment="Top" Width="237" Height="56" Click="CommitBugList_Click"/>
 
 	</Grid>
 </Window>
