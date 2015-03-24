@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Web;
 using Newtonsoft.Json;
@@ -12,17 +11,17 @@ namespace Minimalistic.Servers
 {
 	public class AccessTokenServer : HttpServer
 	{
-		public Uri TokenEndpoint { get; set; }
+	    Uri TokenEndpoint { get; set; }
 
-		public Uri TokenRequestEndpoint { get; set; }
+	    Uri TokenRequestEndpoint { get; set; }
 
-		public delegate void AccessTokenStorageRequest(Uri accessTokenStorageEndpoint, string accessToken);
+		delegate void AccessTokenStorageRequest(Uri accessTokenStorageEndpoint, string accessToken);
 
-		public delegate void AccessTokenRetrievalRequest(Uri accessTokenRequestEndpoint, string authorizationCode);
+		delegate void AccessTokenRetrievalRequest(Uri accessTokenRequestEndpoint, string authorizationCode);
 
-		public AccessTokenStorageRequest StoreAccessToken { get; set; }
+		AccessTokenStorageRequest StoreAccessToken { get; set; }
 
-		public AccessTokenRetrievalRequest RetrieveAccessToken { get; set; }
+		AccessTokenRetrievalRequest RetrieveAccessToken { get; set; }
 
 		public AccessTokenServer(IPAddress address, int port) : base(address, port)
 		{

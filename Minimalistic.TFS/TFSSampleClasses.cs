@@ -1,28 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Configuration;
-using System.IdentityModel.Selectors;
-using System.IdentityModel.Tokens;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Script.Serialization;
-using Microsoft.IdentityModel.S2S.Tokens;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.WorkItemTracking.Client;
 using Newtonsoft.Json.Linq;
 using Attachment = Microsoft.Exchange.WebServices.Data.Attachment;
-using AudienceRestriction = Microsoft.IdentityModel.Tokens.AudienceRestriction;
-using ConfigurationBasedIssuerNameRegistry = Microsoft.IdentityModel.Tokens.ConfigurationBasedIssuerNameRegistry;
-using SecurityTokenHandlerConfiguration = Microsoft.IdentityModel.Tokens.SecurityTokenHandlerConfiguration;
 
 namespace Minimalistic.TFS
 {
@@ -74,218 +65,24 @@ namespace Minimalistic.TFS
 	}
 
 	#region stuff
-	public class JsonAuthMetadataDocument
+
+    #endregion
+
+    internal class JsonToken
 	{
-		public string Id { get; set; }
-		public string Version { get; set; }
-		public string Name { get; set; }
-		public string Realm { get; set; }
-		public string ServiceName { get; set; }
-		public string Issuer { get; set; }
-		public string[] AllowedAudiences { get; set; }
-		public JsonKey[] Keys;
-		public JsonEndpoint[] Endpoints;
-	}
-
-	public class JsonEndpoint
-	{
-		public string Location { get; set; }
-		public string Protocol { get; set; }
-		public string Usage { get; set; }
-	}
-
-	public class JsonKey
-	{
-		public string Usage { get; set; }
-		public JsonKeyValue KeyValue { get; set; }
-	}
-
-	public class JsonKeyValue
-	{
-		public string Type { get; set; }
-		public string Value { get; set; }
-	}
-
-	public class IdentityTokenRequest
-	{
-		public string Token { get; set; }
-	}
-
-	#endregion
-	public class AttachmentSampleServiceResponse
-	{
-		public string[] AttachmentNames { get; set; }
-		public int AttachmentsProcessed { get; set; }
-	}
-
-	public class IdentityToken
-	{
-		public string Msexchuid { get; set; }
-		public string Amurl { get; set; }
-		public string UniqueId => ComputeUniqueIdentification();
-
-		public string Iss { get; set; }
-		public string X5T { get; set; }
-		public DateTime Nbf { get; set; }
-		public DateTime Exp { get; set; }
-		public string Aud { get; set; }
-		public string Version { get; set; }
-		public bool Isbrowserhostedapp { get; set; }
-		public string Appctxsender { get; set; }
-
-		// Salt to apply when creating unique ID.
-		readonly byte[] salt = { 25, 139, 201, 13 };
-
-		string ComputeUniqueIdentification()
-		{
-			var inputBytes = Encoding.ASCII.GetBytes(string.Concat(Msexchuid, Amurl));
-
-			// Combine input bytes and salt.
-			var saltedInput = new byte[salt.Length + inputBytes.Length];
-			salt.CopyTo(saltedInput, 0);
-			inputBytes.CopyTo(saltedInput, salt.Length);
-
-			// Compute the unique key.
-			var hashedBytes = SHA256.Create().ComputeHash(saltedInput);
-
-			// Convert the hashed value to a string and return.
-			return BitConverter.ToString(hashedBytes);
-		}
-
-		static JsonWebSecurityTokenHandler GetSecurityTokenHandler(string audience,
-			string authMetadataEndpoint,
-			X509Certificate2 currentCertificate)
-		{
-			var jsonTokenHandler = new JsonWebSecurityTokenHandler
-			{
-				Configuration = new SecurityTokenHandlerConfiguration
-				{
-					AudienceRestriction = new AudienceRestriction(AudienceUriMode.Always)
-				}
-			};
-
-			jsonTokenHandler.Configuration.AudienceRestriction.AllowedAudienceUris.Add(
-			  new Uri(audience, UriKind.RelativeOrAbsolute));
-
-			jsonTokenHandler.Configuration.CertificateValidator = X509CertificateValidator.None;
-
-			jsonTokenHandler.Configuration.IssuerTokenResolver =
-			  SecurityTokenResolver.CreateDefaultSecurityTokenResolver(
-				new ReadOnlyCollection<SecurityToken>(new List<SecurityToken>(
-				  new SecurityToken[]
-			{
-			  new X509SecurityToken(currentCertificate)
-			})), false);
-
-			var issuerNameRegistry =
-				new ConfigurationBasedIssuerNameRegistry();
-			issuerNameRegistry.AddTrustedIssuer(currentCertificate.Thumbprint, "VSOBug");
-			jsonTokenHandler.Configuration.IssuerNameRegistry = issuerNameRegistry;
-
-			return jsonTokenHandler;
-		}
-
-		private X509Certificate2 GetSigningCertificate(Uri authMetadataEndpoint)
-		{
-			var document = GetMetadataDocument(authMetadataEndpoint);
-
-			if (null == document.Keys || document.Keys.Length <= 0)
-				throw new ApplicationException("The metadata document does not contain a signing certificate.");
-			var signingKey = document.Keys[0];
-
-			if (signingKey?.KeyValue != null)
-			{
-				return new X509Certificate2(Encoding.UTF8.GetBytes(signingKey.KeyValue.Value));
-			}
-
-			throw new ApplicationException("The metadata document does not contain a signing certificate.");
-		}
-		private JsonAuthMetadataDocument GetMetadataDocument(Uri authMetadataEndpoint)
-		{
-			// Uncomment the next line if your Exchange server uses the default
-			// self-signed certificate.
-			// ServicePointManager.ServerCertificateValidationCallback = Config.CertificateValidationCallback;
-
-			byte[] acsMetadata;
-			using (var webClient = new WebClient())
-			{
-				acsMetadata = webClient.DownloadData(authMetadataEndpoint);
-			}
-			var jsonResponseString = Encoding.UTF8.GetString(acsMetadata);
-
-			var document = new JavaScriptSerializer().Deserialize<JsonAuthMetadataDocument>(jsonResponseString);
-
-			if (null == document)
-			{
-				throw new ApplicationException(string.Format("No authentication metadata document found at {0}.", authMetadataEndpoint));
-			}
-
-			//using (WebClient webClient = new WebClient())
-			//{
-			//    var x = webClient.DownloadData("https://outlook.office365.com/EWS/OData/Me");
-
-			//}
-
-			return document;
-		}
-
-
-
-		public IdentityToken(IdentityTokenRequest rawToken, string audience, string authMetadataEndpoint)
-		{
-			var currentCertificate = GetSigningCertificate(new Uri(authMetadataEndpoint));
-
-			var jsonTokenHandler =
-				GetSecurityTokenHandler(audience, authMetadataEndpoint, currentCertificate);
-
-			var jsonToken = jsonTokenHandler.ReadToken(rawToken.Token);
-			var webToken = (JsonWebSecurityToken)jsonToken;
-
-			X5T = currentCertificate.Thumbprint;
-			Iss = webToken.Issuer;
-			Aud = webToken.Audience;
-			Exp = webToken.ValidTo;
-			Nbf = webToken.ValidFrom;
-			foreach (var claim in webToken.Claims)
-			{
-				if (claim.ClaimType.Equals("appctxsender"))
-				{
-					Appctxsender = claim.Value;
-				}
-
-				if (claim.ClaimType.Equals("isbrowserhostedapp"))
-				{
-					Isbrowserhostedapp = claim.Value == "true";
-				}
-
-				if (!claim.ClaimType.Equals("appctx")) continue;
-				var appContext =
-					new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(claim.Value);
-				Amurl = appContext["amurl"];
-				Msexchuid = appContext["msexchuid"];
-				Version = appContext["version"];
-			}
-		}
-
-	}
-
-
-	internal class JsonToken
-	{
-		public bool IsValid;
-		public Dictionary<string, string> HeaderClaims;
-		public Dictionary<string, string> PayloadClaims;
-		public string Signature;
-		public Dictionary<string, string> AppContext;
+		bool isValid;
+        readonly Dictionary<string, string> headerClaims;
+        readonly Dictionary<string, string> payloadClaims;
+        readonly Dictionary<string, string> appContext;
 
 		private void ValidateHeaderClaim(string key, string value)
 		{
-			if (!HeaderClaims.ContainsKey(key))
+			if (!headerClaims.ContainsKey(key))
 			{
 				throw new ApplicationException(String.Format("Header does not contain \"{0}\" claim.", key));
 			}
 
-			if (!value.Equals(HeaderClaims[key]))
+			if (!value.Equals(headerClaims[key]))
 			{
 				throw new ApplicationException(String.Format("\"{0}\" claim must be \"{0}\".", key, value));
 			}
@@ -296,20 +93,20 @@ namespace Minimalistic.TFS
 			ValidateHeaderClaim("typ", "JWT");
 			ValidateHeaderClaim("alg", "RS256");
 
-			if (!HeaderClaims.ContainsKey("x5t"))
+			if (!headerClaims.ContainsKey("x5t"))
 			{
 				throw new ApplicationException(String.Format("Header does not contain \"{0}\" claim.", "x5t"));
 			}
 		}
 		private void ValidateLifetime()
 		{
-			if (!PayloadClaims.ContainsKey("nbf"))
+			if (!payloadClaims.ContainsKey("nbf"))
 			{
 				throw new ApplicationException(
 				  String.Format("The \"{0}\" claim is missing from the token.", "nbf"));
 			}
 
-			if (!PayloadClaims.ContainsKey("exp"))
+			if (!payloadClaims.ContainsKey("exp"))
 			{
 				throw new ApplicationException(
 				  String.Format("The \"{0}\" claim is missing from the token.", "exp"));
@@ -319,8 +116,8 @@ namespace Minimalistic.TFS
 
 			var padding = new TimeSpan(0, 5, 0);
 
-			var validFrom = unixEpoch.AddSeconds(int.Parse(PayloadClaims["nbf"]));
-			var validTo = unixEpoch.AddSeconds(int.Parse(PayloadClaims["exp"]));
+			var validFrom = unixEpoch.AddSeconds(int.Parse(payloadClaims["nbf"]));
+			var validTo = unixEpoch.AddSeconds(int.Parse(payloadClaims["exp"]));
 
 			var now = DateTime.UtcNow;
 
@@ -336,7 +133,7 @@ namespace Minimalistic.TFS
 		}
 		private void ValidateMetadataLocation()
 		{
-			if (!AppContext.ContainsKey("amurl"))
+			if (!appContext.ContainsKey("amurl"))
 			{
 				throw new ApplicationException(String.Format("The \"{0}\" claim is missing from the token.", "amurl"));
 			}
@@ -346,7 +143,7 @@ namespace Minimalistic.TFS
 
 		private void ValidateAudience()
 		{
-			if (!PayloadClaims.ContainsKey("aud"))
+			if (!payloadClaims.ContainsKey("aud"))
 			{
 				throw new ApplicationException(String.Format("The \"{0}\" claim is missing from the application context.", "aud"));
 			}
@@ -359,20 +156,19 @@ namespace Minimalistic.TFS
 		{
 
 			// Assume that the token is invalid to start out.
-			IsValid = false;
+			isValid = false;
 
 			// Set the private dictionaries that contain the claims.
-			HeaderClaims = header;
-			PayloadClaims = payload;
-			Signature = signature;
+			headerClaims = header;
+			payloadClaims = payload;
 
-			// If there is no "appctx" claim in the token, throw an ApplicationException.
-			if (!PayloadClaims.ContainsKey("appctx"))
+		    // If there is no "appctx" claim in the token, throw an ApplicationException.
+			if (!payloadClaims.ContainsKey("appctx"))
 			{
 				throw new ApplicationException(String.Format("The {0} claim is not present.", "appctx"));
 			}
 
-			AppContext = new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(payload["appctx"]);
+			appContext = new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(payload["appctx"]);
 
 
 			// Validate the header fields.
@@ -390,7 +186,7 @@ namespace Minimalistic.TFS
 
 			// If the token passes all the validation checks, we
 			// can assume that it is valid.
-			IsValid = true;
+			isValid = true;
 		}
 
 	}
@@ -425,42 +221,8 @@ namespace Minimalistic.TFS
 		{
 			return TextEncoding.GetString(DecodeBytes(arg));
 		}
-
-		public static JsonToken ValidateToken(string token)
-		{
-			var jsonToken = Decode(token);
-
-			return jsonToken;
-		}
-
-
-		public static JsonToken Decode(string rawToken)
-		{
-			var tokenParts = rawToken.Split('.');
-
-			if (tokenParts.Length != 3)
-			{
-				throw new ApplicationException("Token must have three parts separated by '.' characters.");
-			}
-
-			var encodedHeader = tokenParts[0];
-			var encodedPayload = tokenParts[1];
-			var signature = tokenParts[2];
-
-			var decodedHeader = Base64Decode(encodedHeader);
-			var decodedPayload = Base64Decode(encodedPayload);
-
-			var serializer = new JavaScriptSerializer();
-
-			var header = serializer.Deserialize<Dictionary<string, string>>(decodedHeader);
-			var payload = serializer.Deserialize<Dictionary<string, string>>(decodedPayload);
-
-			return new JsonToken(header, payload, signature);
-		}
-
-
 	}
-	public class AppController
+	public abstract class AppController
 	{
 		static string StripHtml(string source)
 		{
@@ -644,27 +406,39 @@ namespace Minimalistic.TFS
 		}
 
 		//Stub class (OEO 2015.03.17)
-		public class NewBugRequest
+		public abstract class NewBugRequest
 		{
-			public string Token;
-			public string EwsUrl;
-			public string AttachmentToken;
+			public readonly string Token;
+			public readonly string EwsUrl;
+			public readonly string AttachmentToken;
 			public ItemId ItemId { get; set; }
-			public string Title;
-			public string Area;
-			public string AssignedTo;
-			public string Notes;
-			public List<Attachment> Attachments;
+			public readonly string Title;
+			public readonly string Area;
+			public readonly string AssignedTo;
+			public readonly string Notes;
+			public readonly List<Attachment> Attachments;
+
+		    protected NewBugRequest(string token, string ewsUrl, string attachmentToken, string title, string area, string assignedTo, string notes, List<Attachment> attachments)
+		    {
+		        Token = token;
+		        EwsUrl = ewsUrl;
+		        AttachmentToken = attachmentToken;
+		        Title = title;
+		        Area = area;
+		        AssignedTo = assignedTo;
+		        Notes = notes;
+		        Attachments = attachments;
+		    }
 		}
 
 		//Stub class (OEO 2015.03.17)
-		public class AppIdentityToken
+		class AppIdentityToken
 		{
-			public void Validate(Uri uri) {}
+			public static void Validate(Uri uri) {}
 		}
 
 		//Stub class (OEO 2015.03.17)
-		public class AuthToken { public static object Parse(string token) {return token;} }
+		class AuthToken { public static object Parse(string token) {return token;} }
 
 		//Stub class (OEO 2015.03.17)
 		public class ExchangeService
@@ -695,16 +469,27 @@ namespace Minimalistic.TFS
 				return new EmailMessage();
 			}
 
-			public void Load(PropertySet ps) {}
+			public static void Load(PropertySet ps) {}
 
-			public class body
+			public abstract class body
 			{
-				public string Text { get; set; }
+			    protected body(string text)
+			    {
+			        Text = text;
+			    }
+
+			    public string Text { get; private set; }
 			}
 
-			public body Body { get; set; }
+			public body Body { get; private set; }
 
-			public List<Attachment> Attachments;
+			public readonly List<Attachment> Attachments;
+
+		    EmailMessage(body body, List<Attachment> attachments)
+		    {
+		        Body = body;
+		        Attachments = attachments;
+		    }
 		}
 
 		//Stub class (OEO 2015.03.17)
@@ -731,7 +516,7 @@ namespace Minimalistic.TFS
 		}
 
 		//Stub class (OEO 2015.03.17)
-		public class FileAttachment : Attachment
+		class FileAttachment : Attachment
 		{
 			public void Load() {}
 
@@ -742,7 +527,7 @@ namespace Minimalistic.TFS
 		public NewBugResponse App(NewBugRequest bugData)
 		{
 			var idtoken = (AppIdentityToken)AuthToken.Parse(bugData.Token);
-			idtoken.Validate(new Uri("https://testoutlookaddin.azurewebsites.net/AppRead/Home/Home.html"));
+			AppIdentityToken.Validate(new Uri("https://testoutlookaddin.azurewebsites.net/AppRead/Home/Home.html"));
 
 			var service = new ExchangeService(ExchangeVersion.Exchange2007Sp1)
 			{
@@ -752,7 +537,7 @@ namespace Minimalistic.TFS
 
 
 			var message = EmailMessage.Bind(service, new ItemId(bugData.ItemId), new PropertySet(BasePropertySet.IdOnly, ItemSchema.Attachments));
-			message.Load(new PropertySet(BasePropertySet.FirstClassProperties, ItemSchema.Attachments));
+			EmailMessage.Load(new PropertySet(BasePropertySet.FirstClassProperties, ItemSchema.Attachments));
 
 			var collectionUri = new Uri("https://dpeted.visualstudio.com/DefaultCollection");
 			const string projectName = "TED Devices and Services";
@@ -838,9 +623,15 @@ namespace Minimalistic.TFS
 //Stub class OEO 2015.03.17
 namespace Microsoft.Exchange.WebServices.Data
 {
-	public class Attachment
+	public abstract class Attachment
 	{
-		public Attachment Id;
-		public string Name;
+		public readonly Attachment Id;
+		public readonly string Name;
+
+	    protected Attachment(Attachment id, string name)
+	    {
+	        Id = id;
+	        Name = name;
+	    }
 	}
 }

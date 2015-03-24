@@ -68,7 +68,6 @@
     <Compile Include="ReportFormatter.cs" />
     <Compile Include="ReportHeaderModel.cs" />
     <Compile Include="TfsCommander.cs" />
-    <Compile Include="TFSSampleClasses.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

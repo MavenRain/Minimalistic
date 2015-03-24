@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
 using Minimalistic.TFS;
@@ -81,7 +80,7 @@ namespace Minimalistic.UX.QedLabInstallationAndReporting
 
 		void CommitBugList_Click(object sender, RoutedEventArgs e)
 		{
-			(new TfsCommander()).CommitBugsToServer(stagedBugs,"Onyeka.Obi@gmail.com","","solomonrain", "TFSTestProject");
+			TfsCommander.CommitBugsToServer(stagedBugs,"Onyeka.Obi@gmail.com","","solomonrain", "TFSTestProject");
 		}
 	}
 }

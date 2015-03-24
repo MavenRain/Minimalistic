@@ -52,7 +52,7 @@ namespace Minimalistic.TfsReportTesting
                 .Append(ReportFormatter.EndOfBodyEmitter())
                 .Append(ReportFormatter.EndOfDomEmitter());
             File.AppendAllText(@"D:\Users\v-oniobi\Documents\sample.html", report.ToString());
-            (new TfsCommander()).CommitBugsToServer(bugCollection, "Onyeka.Obi@gmail.com", "", "solomonrain", "TFSTestProject");
+            TfsCommander.CommitBugsToServer(bugCollection, "Onyeka.Obi@gmail.com", "", "solomonrain", "TFSTestProject");
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
+
 // ReSharper disable ConvertPropertyToExpressionBody for compatibility with Mono 3.2.8
 
 namespace Minimalistic.Servers
