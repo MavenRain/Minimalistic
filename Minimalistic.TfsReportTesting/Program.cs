@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
+using Microsoft.TeamFoundation.WorkItemTracking.Client;
 using Minimalistic.TFS;
 
 namespace Minimalistic.TfsReportTesting
@@ -33,7 +36,7 @@ namespace Minimalistic.TfsReportTesting
                 TestCase = new TestCase("description", "device"),
                 TestSteps = "FirstTest"
             };
-            var bugCollection = new List<BugModel> { bugModel, bugModel, bugModel, bugModel };
+            var bugCollection = new List<WorkItem> { bugModel, bugModel, bugModel, bugModel };
             var report = new StringBuilder();
             report.Append(ReportFormatter.BeginningOfDomEmitter())
                 .Append(ReportFormatter.BeginningOfHeadEmitter())
@@ -51,8 +54,10 @@ namespace Minimalistic.TfsReportTesting
                 .Append(ReportFormatter.BugReportEmitter(bugModel))
                 .Append(ReportFormatter.EndOfBodyEmitter())
                 .Append(ReportFormatter.EndOfDomEmitter());
-            File.AppendAllText(@"D:\Users\v-oniobi\Documents\sample.html", report.ToString());
-            TfsCommander.CommitBugsToServer(bugCollection, "Onyeka.Obi@gmail.com", "", "solomonrain", "TFSTestProject");
+			//File.AppendAllText(@"D:\Users\v-oniobi\Documents\sample.html", report.ToString());
+			//(new TfsCommander(new NetworkCredential("Onyeka.Obi@gmail.com",""), "solomonrain", bugCollection, new List<Project>() )).CommitBugsToServer("TFSTestProject");
+	        Console.WriteLine(new TfsCommander(new NetworkCredential("Onyeka.Obi@gmail.com", ""), "solomonrain", bugCollection,
+		        new List<Project>()).RetrieveBugsFromProjects(new List<string> {"TFSTestProject"}).ToString());
         }
     }
 }
