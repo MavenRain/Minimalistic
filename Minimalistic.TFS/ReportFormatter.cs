@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.TeamFoundation.WorkItemTracking.Client;
 
 namespace Minimalistic.TFS
 {
@@ -176,10 +177,10 @@ namespace Minimalistic.TFS
                 .Append(reportHeader.ReviewedUsingDevices + "</p>")).ToString();
         }
 
-        public static string BugChartEmitter(IEnumerable<BugModel> listOfBugs)
+        public static string BugChartEmitter(IEnumerable<WorkItem> listOfBugs)
         {
             var bugChart = new StringBuilder();
-            var bugs = listOfBugs as BugModel[] ?? listOfBugs.ToArray();
+            var bugs = listOfBugs as WorkItem[] ?? listOfBugs.ToArray();
             bugChart.Append("<table class='TableGrid'>")
                 .Append("<tr>")
                 .Append("<td class='TableHeading' width=60>")
@@ -202,15 +203,15 @@ namespace Minimalistic.TFS
                 .Append("<tr>")
                 .Append("<td width=60>")
                 .Append("<p style='text-align: center'><b><span style='color:red'>")
-                .Append(bugs.Count(bug => bug.State == State.New).ToString())
+                .Append(bugs.Count(bug => bug.State == "New").ToString())
                 .Append("</span></b></p></td>")
                 .Append("<td width=100>")
                 .Append("<p style='text-align: center'><b><span style='color:#C55A11'>")
-                .Append(bugs.Count(bug => bug.State == State.Unresolved).ToString())
+                .Append(bugs.Count(bug => bug.State == "Approved").ToString())
                 .Append("</span></b></p></td>")
                 .Append("<td width=100>")
                 .Append("<p style='text-align: center'><b><span style='color:#548235'>")
-                .Append(bugs.Count(bug => bug.State == State.Resolved).ToString())
+                .Append(bugs.Count(bug => bug.State == "Done").ToString())
                 .Append("</span></b></p></td>")
                 .Append("<td width=60>")
                 .Append("<p style='text-align: center'><b><span>")

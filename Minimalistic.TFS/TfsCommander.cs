@@ -35,12 +35,6 @@ namespace Minimalistic.TFS
 			foreach (var discoveredBug in bugList)
 			{
 				var bug = new WorkItem(workItemType) {Title = discoveredBug.Summary.Description};
-				if (bug.Validate().Count > 0)
-					return new CommandStatus
-					{
-						Result = CommandStatusResult.Failure,
-						Message = "The following work item fields failed validation: " + bug.Validate().Cast<Field>()
-					};
 				var report = new StringBuilder();
 				report.Append(ReportFormatter.BeginningOfDomEmitter())
 					.Append(ReportFormatter.BeginningOfHeadEmitter())
@@ -70,12 +64,18 @@ namespace Minimalistic.TFS
 				}
 				bug.State = "New";
 				(bug.Fields.Cast<Field>().Single(f => f.Name == "Acceptance Criteria")).Value = report.ToString();
+				if (bug.Validate().Count > 0)
+					return new CommandStatus
+					{
+						Result = CommandStatusResult.Failure,
+						Message = "The following work item fields failed validation: " + bug.Validate().Cast<Field>()
+					};
 				bug.Save();	
 			}
 			return new CommandStatus() { Result = CommandStatusResult.Success, Message = "Save completed" };
 		}
 
-	    public void CommitReportToServer(string projectName)
+	    public CommandStatus CommitReportToServer(string projectName)
 	    {
 	        var bug =
 	            new WorkItem(
@@ -98,9 +98,26 @@ namespace Minimalistic.TFS
 			bug.State = "New";
 			(bug.Fields.Cast<Field>().Single(f => f.Name == "Severity")).Value = "2 - High";
 			(bug.Fields.Cast<Field>().Single(f => f.Name == "Acceptance Criteria")).Value = report.ToString();
-				bug.Save();
-	    }
+			if (bug.Validate().Count > 0)
+				return new CommandStatus
+				{
+					Result = CommandStatusResult.Failure,
+					Message = "The following work item fields failed validation: " + bug.Validate().Cast<Field>()
+				};
+			bug.Save();
+			return new CommandStatus() { Result = CommandStatusResult.Success, Message = "Save completed" };
+		}
 
-		
+		public List<WorkItem> RetrieveBugsFromProjects(IEnumerable<string> projectNames)
+		{
+			var workItemStore = teamProjectCollection.GetService<WorkItemStore>();
+            var selectedProjects = workItemStore.Projects.Cast<Project>().Where(project => projectNames.Contains(project.Name));
+			var bugList = new List<WorkItem>();
+			foreach (var workItemCollection in selectedProjects.Select(selectedProject => workItemStore.Query("select * from WorkItems where [Area Path] = '" + selectedProject.Name + "' and [Work Item Type] = 'Bug'")))	
+			{
+				bugList.AddRange(workItemCollection.Cast<WorkItem>());
+			}
+			return bugList;
+		}
 	}
 }
